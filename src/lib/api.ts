@@ -37,7 +37,7 @@ export async function getProducts(page = 1, limit = 10, categorySlug?: string) {
           .select(`
             *,
             category:categories(name, slug, image_url),
-            variants:product_variants(*)
+            variants:product_variants!product_variants_product_id_fkey(*)
           `, { count: 'exact' })
           .eq('is_visible', true)
           .eq('category_id', categoryData.id)
@@ -57,7 +57,7 @@ export async function getProducts(page = 1, limit = 10, categorySlug?: string) {
         .select(`
           *,
           category:categories(name, slug, image_url),
-          variants:product_variants(*)
+          variants:product_variants!product_variants_product_id_fkey(*)
         `, { count: 'exact' })
         .eq('is_visible', true)
         .range(from, to);
@@ -83,7 +83,7 @@ export async function getAllProducts() {
     .select(`
       *,
       category:categories(name, slug, image_url),
-      variants:product_variants(*)
+      variants:product_variants!product_variants_product_id_fkey(*)
     `)
     .eq('is_visible', true);
 

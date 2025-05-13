@@ -147,7 +147,7 @@ const AdminProducts: React.FC = () => {
     setOriginalPrice('');
     setSize('');
     setCategoryId(categories.length > 0 ? categories[0].id : '');
-    setIsVisible(true);
+    setIsVisible(false); // Set to false by default for new products
     setImageFiles([]);
     setImagePreviews([]);
     setExistingImages([]);
@@ -198,6 +198,12 @@ const AdminProducts: React.FC = () => {
 
   const handleToggleVisibility = async (product: Product) => {
     try {
+      // If trying to make visible, check if product has variants
+      if (!product.is_visible && (!product.variants || product.variants.length === 0)) {
+        setError('Cannot make a product visible until it has at least one variant. Please add a variant first.');
+        return;
+      }
+
       const { error } = await supabase
         .from('products')
         .update({ is_visible: !product.is_visible })
@@ -256,6 +262,16 @@ const AdminProducts: React.FC = () => {
           ? parsedOriginalPrice
           : null;
 
+      // Check if we're trying to make a product visible without variants
+      let finalIsVisible = isVisible;
+
+      if (isVisible && editingProduct && (!editingProduct.variants || editingProduct.variants.length === 0)) {
+        // If trying to make visible but has no variants, force to hidden
+        finalIsVisible = false;
+        // Show a warning
+        setError('Product cannot be made visible until it has at least one variant. Saving as hidden.');
+      }
+
       const productData = {
         name,
         description: description || null,
@@ -263,7 +279,7 @@ const AdminProducts: React.FC = () => {
         original_price: finalOriginalPrice,
         category_id: categoryId,
         size: size || null,
-        is_visible: isVisible
+        is_visible: finalIsVisible
         // image_urls is no longer stored at product level
       };
 
@@ -490,6 +506,9 @@ const AdminProducts: React.FC = () => {
                 />
                 <span className="text-sm font-medium">Visible in shop</span>
               </label>
+              <p className="text-xs text-amber-600 mt-1 ml-5">
+                Note: Products will only be visible after at least one variant has been added.
+              </p>
             </div>
 
             <div>

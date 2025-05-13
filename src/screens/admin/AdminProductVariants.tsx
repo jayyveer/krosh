@@ -230,14 +230,31 @@ const AdminProductVariants: React.FC = () => {
         }
 
         // If this is the first variant, set it as the default for the product
-        if (!product?.default_variant_id && newVariant) {
-          const { error: updateProductError } = await supabase
-            .from('products')
-            .update({ default_variant_id: newVariant.id })
-            .eq('id', productId);
+        // and make the product visible if it's not already
+        if (newVariant) {
+          const updateData: any = {};
 
-          if (updateProductError) {
-            console.error('Error updating product default variant:', updateProductError);
+          if (!product?.default_variant_id) {
+            updateData.default_variant_id = newVariant.id;
+          }
+
+          // If this is the first variant and product is not visible, make it visible
+          if (!product?.is_visible && variants.length === 0) {
+            updateData.is_visible = true;
+          }
+
+          if (Object.keys(updateData).length > 0) {
+            const { error: updateProductError } = await supabase
+              .from('products')
+              .update(updateData)
+              .eq('id', productId);
+
+            if (updateProductError) {
+              console.error('Error updating product:', updateProductError);
+            } else if (updateData.is_visible) {
+              // Show success message if product was made visible
+              showToast('Product is now visible in the shop', 'success');
+            }
           }
         }
       }
