@@ -105,6 +105,15 @@ This repository represents Phase 0 (UI Scaffold) of the Krosh project. Future ph
 1. ✅ Topnavbar in the right now shows first cart icon then Login button/ if logged in then it shows circle user avatar and name of the user
 2. ✅ Sidebar is now open when in desktop mode and closed by default when in mobile mode
 3. ✅ Cart no. of products in the cart is now reflected instantly using Redux
+4. ✅ Made the login route a separate route with no layout (no header/bottom tabs)
+5. ✅ Added user avatar dropdown with profile, orders, and logout options
+6. ✅ Added logout button in sidebar and profile section
+7. ✅ Profile section now shows user details (name, email, phone, addresses)
+8. ✅ Updated bottom tabs to show Home, Search, Categories, Shop, and Profile
 
 ## PENDING TASKS
-1. 
+1. Remove Shop from the bottom tab and when user selects any category from categories tab it should show products of that category only after applying filter of that category.
+2. Apply a back button to sections which takes them back t where they cam from 
+3. Style heading a little better Profile,Categories etc doesnt look nice at the top style better with back button 
+4. When the product is added to cart the toast message it shown at the bottom show it at the top right and a small version only
+5. When the product is added to the cart the product cart does not show the upodated count, it only shows when i go to the cart page then it gets updated

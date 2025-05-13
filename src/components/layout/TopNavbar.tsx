@@ -1,9 +1,10 @@
 import React from 'react';
-import { ShoppingCart, Menu, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ShoppingCart, Menu } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useCart } from '../../hooks/useCart';
+import UserDropdown from '../ui/UserDropdown';
 
 interface TopNavbarProps {
   toggleSidebar: () => void;
@@ -12,6 +13,7 @@ interface TopNavbarProps {
 const TopNavbar: React.FC<TopNavbarProps> = ({ toggleSidebar }) => {
   const { user } = useAuthContext();
   const { cartItemsCount } = useCart();
+  const location = useLocation();
 
   return (
     <motion.header
@@ -51,19 +53,16 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ toggleSidebar }) => {
             )}
           </Link>
 
-          {/* Login Button or User Avatar */}
+          {/* Login Button or User Dropdown */}
           {user ? (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-krosh-lavender/50 flex items-center justify-center">
-                <User size={18} className="text-krosh-text" />
-              </div>
-              <span className="text-sm font-medium text-gray-700 hidden md:block truncate max-w-[150px]">
-                {user.user_metadata?.name || user.email}
-              </span>
-            </div>
+            <UserDropdown
+              userName={user.user_metadata?.name || ''}
+              userEmail={user.email || ''}
+            />
           ) : (
             <Link
-              to="/profile"
+              to="/login"
+              state={{ from: location }} // Pass current location for redirect after login
               className="px-4 py-1.5 bg-krosh-lavender text-krosh-text rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
             >
               Login
