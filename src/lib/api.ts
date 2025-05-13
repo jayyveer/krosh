@@ -13,27 +13,68 @@ type CartItem = {
   quantity: number;
 };
 
-export async function getProducts(page = 1, limit = 10) {
+export async function getProducts(page = 1, limit = 10, categorySlug?: string) {
   // Calculate the range for pagination
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
-  const { data, error, count } = await supabase
-    .from('products')
-    .select(`
-      *,
-      category:categories(name, slug),
-      variants:product_variants(*)
-    `, { count: 'exact' })
-    .eq('is_visible', true)
-    .range(from, to);
+  try {
+    let data, count;
 
-  if (error) throw error;
-  return {
-    data: data as Product[],
-    count: count || 0,
-    hasMore: count ? from + limit < count : false
-  };
+    if (categorySlug) {
+      // For category filtering, we need to use a different approach
+      // First, get the category ID from the slug
+      const { data: categoryData } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('slug', categorySlug)
+        .single();
+
+      if (categoryData) {
+        // Then filter products by category_id
+        const result = await supabase
+          .from('products')
+          .select(`
+            *,
+            category:categories(name, slug),
+            variants:product_variants(*)
+          `, { count: 'exact' })
+          .eq('is_visible', true)
+          .eq('category_id', categoryData.id)
+          .range(from, to);
+
+        data = result.data;
+        count = result.count;
+      } else {
+        // Category not found, return empty result
+        data = [];
+        count = 0;
+      }
+    } else {
+      // No category filter, get all products
+      const result = await supabase
+        .from('products')
+        .select(`
+          *,
+          category:categories(name, slug),
+          variants:product_variants(*)
+        `, { count: 'exact' })
+        .eq('is_visible', true)
+        .range(from, to);
+
+      data = result.data;
+      count = result.count;
+    }
+
+    return {
+      data: data as Product[],
+      count: count || 0,
+      hasMore: count ? from + limit < count : false
+    };
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
+  }
 }
 
 export async function getAllProducts() {
@@ -50,31 +91,43 @@ export async function getAllProducts() {
   return data as Product[];
 }
 
+// Cache for user ID to avoid repeated auth calls
+let cachedUserId: string | null = null;
+
 export async function getCart() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  // Use cached user ID if available to reduce auth API calls
+  if (!cachedUserId) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    cachedUserId = user.id;
+  }
 
   const { data, error } = await supabase
     .from('cart_items')
     .select(`
-      *,
-      product:products(*),
-      variant:product_variants(*)
+      id,
+      quantity,
+      product:products(id, name, price, image_urls),
+      variant:product_variants(id, color, weight)
     `)
-    .eq('user_id', user.id);
+    .eq('user_id', cachedUserId);
 
   if (error) throw error;
   return data as CartItem[];
 }
 
 export async function addToCart(productId: string, variantId: string, quantity: number) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('User not authenticated');
+  // Use cached user ID if available
+  if (!cachedUserId) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+    cachedUserId = user.id;
+  }
 
   const { data, error } = await supabase
     .from('cart_items')
     .upsert({
-      user_id: user.id,
+      user_id: cachedUserId,
       product_id: productId,
       variant_id: variantId,
       quantity

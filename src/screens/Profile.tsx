@@ -51,9 +51,9 @@ const Profile: React.FC = () => {
 
       if (profileError) throw profileError;
 
-      // Fetch user addresses
+      // Fetch user addresses from the correct 'addresses' table
       const { data: addressesData, error: addressesError } = await supabase
-        .from('user_addresses')
+        .from('addresses')
         .select('*')
         .eq('user_id', user?.id);
 

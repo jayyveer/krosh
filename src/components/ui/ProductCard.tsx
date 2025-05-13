@@ -124,32 +124,38 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             )}
           </div>
 
-          {/* Add/Remove cart button */}
-          {isInCart ? (
+          {/* Add/Remove cart button with animation */}
+          <div className="relative h-10 mt-2">
             <motion.button
-              className="w-full py-2 bg-red-100 text-red-600 rounded-lg text-sm font-medium flex items-center justify-center gap-1 mt-2"
+              className="absolute w-full py-2 bg-red-100 text-red-600 rounded-lg text-sm font-medium flex items-center justify-center gap-1"
+              initial={{ opacity: isInCart ? 1 : 0, y: isInCart ? 0 : 20 }}
+              animate={{ opacity: isInCart ? 1 : 0, y: isInCart ? 0 : 20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
               whileTap={{ scale: 0.98 }}
               onClick={handleRemoveFromCart}
-              disabled={!inStock}
+              disabled={!inStock || !isInCart}
             >
               <Trash2 size={14} />
-              Remove from Cart
+              Remove
             </motion.button>
-          ) : (
+
             <motion.button
-              className={`w-full py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1 mt-2 ${
+              className={`absolute w-full py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1 ${
                 inStock
-                  ? 'bg-krosh-lavender text-white hover:bg-krosh-lavender/90'
+                  ? 'bg-krosh-pink text-white hover:bg-krosh-pink/90'
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
               }`}
+              initial={{ opacity: isInCart ? 0 : 1, y: isInCart ? -20 : 0 }}
+              animate={{ opacity: isInCart ? 0 : 1, y: isInCart ? -20 : 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
               whileTap={{ scale: 0.98 }}
               onClick={handleAddToCart}
-              disabled={!inStock}
+              disabled={!inStock || isInCart}
             >
               <ShoppingCart size={14} />
               {inStock ? 'Add to Cart' : 'Out of Stock'}
             </motion.button>
-          )}
+          </div>
         </div>
       </motion.div>
     </Link>

@@ -47,6 +47,7 @@ const Shop: React.FC = () => {
     loadAllProducts();
   }, []);
 
+  // Function to load products with the current active category
   async function loadProducts(pageNum = 1) {
     try {
       if (pageNum === 1) {
@@ -55,7 +56,46 @@ const Shop: React.FC = () => {
         setLoadingMore(true);
       }
 
-      const result = await getProducts(pageNum);
+      // Get category slug if not "All"
+      const categorySlug = activeCategory !== 'All'
+        ? allProducts.find(p => p.category?.name === activeCategory)?.category?.slug
+        : undefined;
+
+      // Pass category slug to API for server-side filtering
+      const result = await getProducts(pageNum, 10, categorySlug);
+
+      if (pageNum === 1) {
+        setProducts(result.data);
+      } else {
+        setProducts(prev => [...prev, ...result.data]);
+      }
+
+      setTotalCount(result.count);
+      setHasMore(result.hasMore);
+      setPage(pageNum);
+    } catch (err) {
+      setError('Failed to load products');
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }
+
+  // Function to load products with a specific category slug
+  // This avoids the issue with stale state when changing categories
+  async function loadProductsByCategory(pageNum = 1, categorySlug?: string) {
+    try {
+      if (pageNum === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      console.log('Loading products with category slug:', categorySlug);
+
+      // Pass the provided category slug directly to API
+      const result = await getProducts(pageNum, 10, categorySlug);
 
       if (pageNum === 1) {
         setProducts(result.data);
@@ -89,9 +129,8 @@ const Shop: React.FC = () => {
     loadProducts(page + 1);
   };
 
-  const filteredProducts = activeCategory === 'All'
-    ? products
-    : products.filter(product => product.category?.name === activeCategory);
+  // No need to filter products client-side anymore since we're filtering at the API level
+  const filteredProducts = products;
 
   // Use allProducts for category list to ensure all categories are shown
   const categories = ['All', ...new Set(allProducts.map(p => p.category?.name))];
@@ -116,16 +155,27 @@ const Shop: React.FC = () => {
                 label={category}
                 active={activeCategory === category}
                 onClick={() => {
-                  setActiveCategory(category);
-                  // Update URL without page reload
+                  // Get the category slug first
+                  let categorySlug: string | undefined;
+
                   if (category === 'All') {
+                    categorySlug = undefined;
                     setSearchParams({});
                   } else {
-                    const slug = products.find(p => p.category?.name === category)?.category?.slug;
-                    if (slug) {
-                      setSearchParams({ category: slug });
+                    categorySlug = allProducts.find(p => p.category?.name === category)?.category?.slug;
+                    if (categorySlug) {
+                      setSearchParams({ category: categorySlug });
                     }
                   }
+
+                  // Reset products and update state
+                  setProducts([]);
+                  setPage(1);
+                  setActiveCategory(category);
+
+                  // Load products with the correct category slug
+                  // Instead of using activeCategory which hasn't updated yet
+                  loadProductsByCategory(1, categorySlug);
                 }}
               />
             ))}
@@ -172,7 +222,7 @@ const Shop: React.FC = () => {
             <button
               onClick={loadMoreProducts}
               disabled={loadingMore}
-              className="px-6 py-2 bg-krosh-lavender text-white rounded-lg shadow-sm hover:bg-krosh-lavender/90 transition-colors disabled:opacity-70"
+              className="px-6 py-2 bg-krosh-blue text-white rounded-lg shadow-sm hover:bg-krosh-blue/90 transition-colors disabled:opacity-70"
             >
               {loadingMore ? 'Loading...' : 'Load More Products'}
             </button>

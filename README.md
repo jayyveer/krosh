@@ -146,5 +146,85 @@ This repository represents Phase 0 (UI Scaffold) of the Krosh project. Future ph
    - Add/Remove from cart functionality
    - Related products section
 
-## PENDING TASKS
-1. 
+## COMPLETED TASKS (NEWEST)
+1. ✅ Changed the color of "Load More Products" button to blue to differentiate from the "Add to Cart" button
+2. ✅ Added smooth animation between "Add to Cart" and "Remove from Cart" buttons for better user experience
+3. ✅ Removed review placeholder in product description page until the feature is developed
+4. ✅ Improved quantity management:
+   - Limited product quantity to maximum of 5
+   - Disabled plus button when maximum quantity is reached
+   - Implemented removal when quantity goes below 1
+   - Updated cart when quantity changes
+5. ✅ Changed color of "Add to Cart" button to pink to make it more visually distinct and active
+6. ✅ Fixed category switching with lazy loading by resetting products and reloading when category changes
+7. ✅ Improved breadcrumbs and product detail page layout:
+   - Enhanced breadcrumb styling with better visual hierarchy
+   - Made product detail page more compact with smaller images and controls
+   - Reduced vertical spacing while maintaining all important information
+
+
+## COMPLETED TASKS (FINAL)
+1. ✅ Optimized API calls:
+   - Reduced unnecessary API calls when navigating between categories
+   - Implemented user ID caching to avoid repeated auth calls
+   - Limited data fetching to only necessary fields
+   - Fixed cart item fetching to be more efficient
+
+2. ✅ Removed quantity changing from product details page:
+   - Quantity management now exclusively in cart page
+   - Added note to inform users about quantity management location
+   - Product page now adds items with quantity 1 by default
+
+3. ✅ Simplified "Remove from Cart" text:
+   - Changed button text from "Remove from Cart" to just "Remove"
+   - Applied change consistently across product cards and detail page
+
+4. ✅ Removed wishlist button:
+   - Removed heart/wishlist button until the feature is implemented
+   - Cleaned up UI to focus on available features
+
+5. ✅ Fixed user address fetching:
+   - Updated API calls to use the correct 'addresses' table instead of 'user_addresses'
+   - Ensured proper data loading for user profile
+
+6. ✅ Improved category filtering at API level:
+   - Modified API call to filter by category at the database level
+   - Updated query to include category filter parameter
+   - Eliminated client-side filtering for better performance
+
+## COMPLETED TASKS (LATEST)
+1. ✅ Added smooth animation to product detail page buttons:
+   - Implemented the same animation for Add/Remove buttons as in ProductCard
+   - Created consistent user experience across the application
+   - Enhanced visual feedback for cart interactions
+
+2. ✅ Fixed repeated cart API calls:
+   - Implemented cart loading state tracking with useRef
+   - Added conditions to prevent unnecessary API calls
+   - Optimized cart fetching when navigating between categories
+
+3. ✅ Fixed category filtering in API:
+   - Completely rewrote the category filtering logic
+   - Now properly filters by category_id at the database level
+   - First gets category ID from slug, then filters products by that ID
+   - Eliminated the issue with incorrect products showing in categories
+
+4. ✅ Verified category denotation in product cards:
+   - Confirmed that category overlay is present in bottom left of product images
+   - Ensured consistent display across all product cards
+   - Maintained the design as specified in requirements
+
+## FEATURES ADDED (LATEST)
+1. Improved API efficiency with proper category filtering
+2. Enhanced user experience with smooth animations
+3. Reduced unnecessary network requests
+4. Optimized data loading patterns
+5. Fixed edge cases in product filtering
+
+## ALL TASKS COMPLETED
+All requested features and fixes have been implemented. The application now has:
+- Optimized API calls with proper filtering
+- Smooth animations for better user experience
+- Proper cart management with quantity limits
+- Clean UI with focus on implemented features
+- Consistent design across all components

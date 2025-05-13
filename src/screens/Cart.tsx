@@ -68,7 +68,10 @@ const Cart: React.FC = () => {
   };
 
   const handleIncreaseQuantity = (item: any) => {
-    updateQuantity(item.id, item.quantity + 1);
+    // Limit to maximum of 5 items
+    if (item.quantity < 5) {
+      updateQuantity(item.id, item.quantity + 1);
+    }
   };
 
   const handleRemoveItem = (itemId: string) => {
@@ -117,7 +120,12 @@ const Cart: React.FC = () => {
                   <span>{item.quantity}</span>
                   <button
                     onClick={() => handleIncreaseQuantity(item)}
-                    className="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+                    className={`px-3 py-1 rounded ${
+                      item.quantity >= 5
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-100 hover:bg-gray-200 transition-colors'
+                    }`}
+                    disabled={item.quantity >= 5}
                   >
                     +
                   </button>
