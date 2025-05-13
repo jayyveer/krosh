@@ -184,3 +184,131 @@ export async function getAdminData() {
     recentOrders
   };
 }
+
+/**
+ * Makes a user an admin by adding them to the admins table
+ * @param userId The ID of the user to make an admin
+ * @param role The admin role to assign (superadmin or editor)
+ */
+export async function makeUserAdmin(userId: string, role: 'superadmin' | 'editor' = 'editor') {
+  // First, get the user's email from the users table
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('email')
+    .eq('id', userId)
+    .single();
+
+  if (userError) throw userError;
+  if (!userData) throw new Error('User not found');
+
+  // Check if the user is already an admin
+  const { data: existingAdmin } = await supabase
+    .from('admins')
+    .select('id')
+    .eq('id', userId)
+    .single();
+
+  if (existingAdmin) {
+    // User is already an admin, update their role
+    const { error } = await supabase
+      .from('admins')
+      .update({ role })
+      .eq('id', userId);
+
+    if (error) throw error;
+    return { message: 'Admin role updated successfully' };
+  } else {
+    // Add the user to the admins table
+    const { error } = await supabase
+      .from('admins')
+      .insert({
+        id: userId,
+        email: userData.email,
+        role
+      });
+
+    if (error) throw error;
+    return { message: 'User made admin successfully' };
+  }
+}
+
+/**
+ * Checks if a user is an admin
+ * @param userId The ID of the user to check
+ * @returns Object containing isAdmin status and admin role if applicable
+ */
+export async function checkAdminStatus(userId: string) {
+  if (!userId) {
+    return { isAdmin: false, role: null };
+  }
+
+  const { data, error } = await supabase
+    .from('admins')
+    .select('role')
+    .eq('id', userId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+    console.error('Error checking admin status:', error);
+  }
+
+  return {
+    isAdmin: !!data,
+    role: data?.role || null
+  };
+}
+
+/**
+ * Synchronizes user data across public.users and admins tables
+ * This is useful when there are inconsistencies in the data
+ * @param userId The ID of the user to synchronize
+ * @param email The email to use for synchronization
+ */
+export async function syncUserData(userId: string, email: string) {
+  if (!userId || !email) {
+    throw new Error('User ID and email are required');
+  }
+
+  // Check if user exists in public.users
+  const { data: publicUser } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (publicUser) {
+    // Update email in public.users if it doesn't match
+    if (publicUser.email !== email) {
+      await supabase
+        .from('users')
+        .update({ email })
+        .eq('id', userId);
+    }
+  } else {
+    // Create user in public.users if it doesn't exist
+    await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        email,
+        name: email.split('@')[0] || 'User', // Default name from email
+      });
+  }
+
+  // Check if user is in admins table
+  const { data: adminUser } = await supabase
+    .from('admins')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (adminUser && adminUser.email !== email) {
+    // Update email in admins if it doesn't match
+    await supabase
+      .from('admins')
+      .update({ email })
+      .eq('id', userId);
+  }
+
+  return { message: 'User data synchronized successfully' };
+}

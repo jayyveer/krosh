@@ -13,6 +13,7 @@ import Cart from './screens/Cart';
 import Categories from './screens/Categories';
 import ProductDetail from './screens/ProductDetail';
 import Admin from './screens/Admin';
+import AdminDebug from './screens/AdminDebug';
 import NotFound from './screens/NotFound';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
                   <Route path="cart" element={<Cart />} />
                   <Route path="product/:id" element={<ProductDetail />} />
                   <Route path="admin" element={<Admin />} />
+                  <Route path="admin-debug" element={<AdminDebug />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>

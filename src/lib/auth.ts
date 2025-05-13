@@ -79,13 +79,25 @@ export function useAuth() {
       return;
     }
 
-    const { data } = await supabase
-      .from('admins')
-      .select('role')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('admins')
+        .select('role')
+        .eq('id', userId)
+        .single();
 
-    setIsAdmin(!!data);
+      if (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+        return;
+      }
+
+      setIsAdmin(!!data);
+      console.log('Admin check result:', { userId, isAdmin: !!data, data });
+    } catch (err) {
+      console.error('Exception in checkAdminStatus:', err);
+      setIsAdmin(false);
+    }
   };
 
   return { user, loading, isAdmin };

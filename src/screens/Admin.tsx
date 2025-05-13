@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import AnimatedContainer from '../components/ui/AnimatedContainer';
-import { Users, Package, ShoppingBag, ClipboardList } from 'lucide-react';
+import { Users, Package, ShoppingBag, ClipboardList, Settings } from 'lucide-react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { getAdminData } from '../lib/api';
+import AdminDebug from '../components/admin/AdminDebug';
 
-const AdminCard: React.FC<{ title: string; count: number; icon: React.ReactNode }> = ({ 
-  title, count, icon 
+const AdminCard: React.FC<{ title: string; count: number; icon: React.ReactNode }> = ({
+  title, count, icon
 }) => (
   <div className="bg-white rounded-xl shadow-sm p-6">
     <div className="flex items-center gap-4">
@@ -26,6 +27,7 @@ const Admin: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     if (isAdmin) {
@@ -74,9 +76,18 @@ const Admin: React.FC = () => {
       <div className="py-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Admin Panel</h1>
-          <span className="px-3 py-1 bg-krosh-pink/20 rounded-full text-sm">
-            {user.email}
-          </span>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="flex items-center gap-1 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
+            >
+              <Settings size={16} />
+              {showDebug ? 'Hide Debug' : 'Debug'}
+            </button>
+            <span className="px-3 py-1 bg-krosh-pink/20 rounded-full text-sm">
+              {user.email}
+            </span>
+          </div>
         </div>
 
         {error && (
@@ -84,7 +95,9 @@ const Admin: React.FC = () => {
             {error}
           </div>
         )}
-        
+
+        {showDebug && <AdminDebug />}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <AdminCard
             title="Total Users"
