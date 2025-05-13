@@ -187,14 +187,14 @@ This document outlines the pending tasks for the Krosh e-commerce platform in or
 | 3 | Implement User Registration | Pending | | |
 | 4 | Complete Orders Page in Admin | Pending | | |
 | 5 | Implement Order Status Workflow | Pending | | |
-| 6 | Convert Currency to Rupees | Pending | | |
-| 7 | Remove Search from Sidebar | Pending | | |
+| 6 | Convert Currency to Rupees | Completed | 2023-07-10 | Created formatPrice utility function and updated all price displays to use ₹ symbol |
+| 7 | Remove Search from Sidebar | Completed | 2023-07-10 | Removed Search option from Sidebar.tsx |
 | 8 | Implement Settings Page in Admin | Pending | | |
 | 9 | Redesign Cart Page | Pending | | |
 | 10 | Redesign Home Page | Pending | | |
 | 11 | Implement Search Tab | Pending | | |
 | 12 | Design My Orders Page | Pending | | |
-| 13 | Add Categories Dropdown in Sidebar | Pending | | |
+| 13 | Add Categories Dropdown in Sidebar | Completed | 2023-07-10 | Added categories dropdown in Sidebar.tsx with dynamic fetching from Supabase |
 | 14 | Manage User Addresses | Pending | | |
 | 15 | Design About Page | Pending | | |
 | 16 | Add Terms and Conditions and Privacy Section | Pending | | |

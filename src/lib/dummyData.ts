@@ -4,10 +4,10 @@ export interface Product {
   price: number;
   imageUrl: string;
   category: string;
-  weight: string;
   color: string;
   material: string;
   inStock: boolean;
+  size?: string;
 }
 
 export const dummyProducts: Product[] = [
@@ -17,10 +17,10 @@ export const dummyProducts: Product[] = [
     price: 5.99,
     imageUrl: "https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     category: "Yarn",
-    weight: "Medium (4)",
     color: "Lavender",
     material: "Acrylic",
-    inStock: true
+    inStock: true,
+    size: "Medium"
   },
   {
     id: 2,
@@ -28,10 +28,10 @@ export const dummyProducts: Product[] = [
     price: 4.99,
     imageUrl: "https://images.pexels.com/photos/7191088/pexels-photo-7191088.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     category: "Yarn",
-    weight: "Light (3)",
     color: "Powder Blue",
     material: "Cotton",
-    inStock: true
+    inStock: true,
+    size: "Small"
   },
   {
     id: 3,
@@ -39,10 +39,10 @@ export const dummyProducts: Product[] = [
     price: 8.99,
     imageUrl: "https://images.pexels.com/photos/7190506/pexels-photo-7190506.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     category: "Yarn",
-    weight: "Heavy (5)",
     color: "Pastel Pink",
     material: "Wool Blend",
-    inStock: true
+    inStock: true,
+    size: "Large"
   },
   {
     id: 4,
@@ -50,7 +50,6 @@ export const dummyProducts: Product[] = [
     price: 15.99,
     imageUrl: "https://images.pexels.com/photos/1061120/pexels-photo-1061120.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
     category: "Tools",
-    weight: "N/A",
     color: "Natural",
     material: "Bamboo",
     inStock: true
@@ -119,13 +118,7 @@ export const colorFilters = [
   "Multicolor"
 ];
 
-export const weightFilters = [
-  "All Weights",
-  "Light (3)",
-  "Medium (4)",
-  "Heavy (5)",
-  "Bulky (5)"
-];
+// Weight filters removed as weight is no longer used
 
 export const promoSections = [
   {

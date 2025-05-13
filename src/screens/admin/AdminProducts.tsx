@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, Image, Package, Eye, EyeOff, Layers } from 'lucid
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { uploadImage, deleteImage } from '../../lib/imageUpload';
+import { formatPrice } from '../../lib/formatters';
 
 interface Product {
   id: string;
@@ -33,8 +34,6 @@ interface ProductVariant {
   product_id: string;
   name: string;
   color: string;
-  size: string;
-  weight: string;
   stock: number;
   is_sold_out: boolean;
   image_urls: string[] | null;
@@ -661,10 +660,10 @@ const AdminProducts: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex flex-col">
-                          <span className="font-medium">${product.price.toFixed(2)}</span>
+                          <span className="font-medium">{formatPrice(product.price)}</span>
                           {product.original_price && (
                             <span className="text-xs text-gray-500 line-through">
-                              ${product.original_price.toFixed(2)}
+                              {formatPrice(product.original_price)}
                             </span>
                           )}
                         </div>

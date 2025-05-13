@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ShoppingCart, Trash2, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cardVariants } from '../../lib/animations';
+import { formatPrice } from '../../lib/formatters';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useCart } from '../../hooks/useCart';
@@ -110,9 +111,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <h3 className="font-medium text-sm mb-1 line-clamp-2 h-10">{product.name}</h3>
 
             <div className="flex items-center gap-2 mb-2">
-              <p className="font-semibold text-base">${Number(product.price).toFixed(2)}</p>
+              <p className="font-semibold text-base">{formatPrice(product.price)}</p>
               {hasDiscount && (
-                <p className="text-sm text-gray-500 line-through">${Number(product.original_price).toFixed(2)}</p>
+                <p className="text-sm text-gray-500 line-through">{formatPrice(product.original_price)}</p>
               )}
             </div>
 

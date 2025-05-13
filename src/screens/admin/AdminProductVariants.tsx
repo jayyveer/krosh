@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, ArrowLeft, Package, Image } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { uploadImage, deleteImage } from '../../lib/imageUpload';
+import { formatPrice } from '../../lib/formatters';
 
 interface Product {
   id: string;
@@ -393,7 +394,7 @@ const AdminProductVariants: React.FC = () => {
             <div>
               <h2 className="text-lg font-semibold">{product.name}</h2>
               <div className="flex gap-4 text-sm text-gray-500">
-                <span>${product.price.toFixed(2)}</span>
+                <span>{formatPrice(product.price)}</span>
                 <span>•</span>
                 <span>{product.category?.name}</span>
               </div>

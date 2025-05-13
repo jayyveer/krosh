@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, ShoppingBag, Search, Info, Package, ShoppingCart, X, LogOut, Grid3X3, Settings } from 'lucide-react';
+import { Home, ShoppingBag, Info, Package, ShoppingCart, X, LogOut, Grid3X3, Settings, ChevronDown, ChevronRight } from 'lucide-react';
 import { sidebarVariants } from '../../lib/animations';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { signOut } from '../../lib/auth';
+import { supabase } from '../../lib/supabase';
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+}
 
 interface SidebarProps {
   isOpen: boolean;
@@ -15,6 +24,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
   const { user, isAdmin, adminChecked, checkAdminStatus } = useAuthContext();
   const [showAdminLink, setShowAdminLink] = useState(false);
   const [adminLinkChecked, setAdminLinkChecked] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
 
   // Check admin status when the user hovers over the sidebar
   // This is a simple way to lazy-load the admin status without affecting performance
@@ -42,11 +53,43 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
     }
   }, [isAdmin, adminChecked]);
 
+  // Fetch categories when the sidebar is opened
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching categories:', error);
+        return;
+      }
+
+      setCategories(data || []);
+    } catch (err) {
+      console.error('Error in fetchCategories:', err);
+    }
+  };
+
   const baseMenuItems = [
     { name: 'Home', path: '/', icon: <Home size={20} /> },
     { name: 'Shop', path: '/shop', icon: <ShoppingBag size={20} /> },
-    { name: 'Search', path: '/search', icon: <Search size={20} /> },
-    { name: 'Categories', path: '/categories', icon: <Grid3X3 size={20} /> },
+    {
+      name: 'Categories',
+      path: '/categories',
+      icon: <Grid3X3 size={20} />,
+      hasDropdown: true,
+      dropdownItems: categories.map(category => ({
+        name: category.name,
+        path: `/shop?category=${category.slug}`,
+        state: { categoryName: category.name }
+      }))
+    },
     { name: 'Orders', path: '/orders', icon: <Package size={20} /> },
     { name: 'Cart', path: '/cart', icon: <ShoppingCart size={20} /> },
     { name: 'About', path: '/about', icon: <Info size={20} /> },
@@ -100,19 +143,54 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
           <ul className="space-y-2 px-2">
             {menuItems.map(item => (
               <li key={item.name}>
-                <NavLink
-                  to={item.path}
-                  onClick={closeSidebar}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                     ${isActive
-                       ? 'bg-krosh-lavender/30 text-krosh-text font-medium'
-                       : 'hover:bg-krosh-lavender/10'}`
-                  }
-                >
-                  {item.icon}
-                  <span>{item.name}</span>
-                </NavLink>
+                {item.hasDropdown ? (
+                  <div>
+                    <button
+                      onClick={() => setShowCategoriesDropdown(!showCategoriesDropdown)}
+                      className="flex items-center justify-between w-full px-4 py-3 rounded-lg transition-colors hover:bg-krosh-lavender/10"
+                    >
+                      <div className="flex items-center gap-3">
+                        {item.icon}
+                        <span>{item.name}</span>
+                      </div>
+                      {showCategoriesDropdown ? (
+                        <ChevronDown size={16} />
+                      ) : (
+                        <ChevronRight size={16} />
+                      )}
+                    </button>
+
+                    {showCategoriesDropdown && (
+                      <div className="ml-8 mt-1 space-y-1">
+                        {item.dropdownItems?.map(dropdownItem => (
+                          <Link
+                            key={dropdownItem.name}
+                            to={dropdownItem.path}
+                            state={dropdownItem.state}
+                            onClick={closeSidebar}
+                            className="block px-4 py-2 rounded-lg text-sm hover:bg-krosh-lavender/10 transition-colors"
+                          >
+                            {dropdownItem.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <NavLink
+                    to={item.path}
+                    onClick={closeSidebar}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
+                       ${isActive
+                         ? 'bg-krosh-lavender/30 text-krosh-text font-medium'
+                         : 'hover:bg-krosh-lavender/10'}`
+                    }
+                  >
+                    {item.icon}
+                    <span>{item.name}</span>
+                  </NavLink>
+                )}
               </li>
             ))}
           </ul>

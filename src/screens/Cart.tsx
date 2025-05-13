@@ -6,6 +6,7 @@ import SectionHeader from '../components/ui/SectionHeader';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCart } from '../hooks/useCart';
+import { formatPrice } from '../lib/formatters';
 
 const Cart: React.FC = () => {
   const { user } = useAuthContext();
@@ -109,9 +110,9 @@ const Cart: React.FC = () => {
                   {item.variant.color && <span><span className="font-medium">Color: </span>{item.variant.name || item.variant.color}</span>}
                 </p>
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold">${Number(item.product.price).toFixed(2)}</p>
+                  <p className="font-semibold">{formatPrice(item.product.price)}</p>
                   {item.product.original_price && Number(item.product.original_price) > Number(item.product.price) && (
-                    <p className="text-sm text-gray-500 line-through">${Number(item.product.original_price).toFixed(2)}</p>
+                    <p className="text-sm text-gray-500 line-through">{formatPrice(item.product.original_price)}</p>
                   )}
                 </div>
               </div>
@@ -150,15 +151,15 @@ const Cart: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm p-4">
           <div className="flex justify-between items-center py-2 border-b">
             <span className="text-gray-600">Subtotal</span>
-            <span className="font-medium">${totalPrice.toFixed(2)}</span>
+            <span className="font-medium">{formatPrice(totalPrice)}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b">
             <span className="text-gray-600">Shipping</span>
-            <span className="font-medium">$0.00</span>
+            <span className="font-medium">{formatPrice(0)}</span>
           </div>
           <div className="flex justify-between items-center py-2 mt-2">
             <span className="text-lg font-semibold">Total</span>
-            <span className="text-lg font-bold">${totalPrice.toFixed(2)}</span>
+            <span className="text-lg font-bold">{formatPrice(totalPrice)}</span>
           </div>
           <button className="w-full mt-4 py-3 bg-krosh-pink text-white rounded-lg font-medium hover:opacity-90 transition-opacity">
             Proceed to Checkout

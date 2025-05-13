@@ -9,6 +9,7 @@ import ProductCard from '../components/ui/ProductCard';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useCart } from '../hooks/useCart';
+import { formatPrice } from '../lib/formatters';
 import { supabase } from '../lib/supabase';
 
 const ProductDetail: React.FC = () => {
@@ -276,9 +277,9 @@ const ProductDetail: React.FC = () => {
 
               {/* Price */}
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl font-bold text-krosh-text">${Number(product.price).toFixed(2)}</span>
+                <span className="text-xl font-bold text-krosh-text">{formatPrice(product.price)}</span>
                 {hasDiscount && (
-                  <span className="text-sm text-gray-500 line-through">${Number(product.original_price).toFixed(2)}</span>
+                  <span className="text-sm text-gray-500 line-through">{formatPrice(product.original_price)}</span>
                 )}
               </div>
 

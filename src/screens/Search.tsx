@@ -6,13 +6,12 @@ import FilterButton from '../components/ui/FilterButton';
 import ProductCard from '../components/ui/ProductCard';
 import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
 import SectionHeader from '../components/ui/SectionHeader';
-import { dummyProducts, colorFilters, weightFilters } from '../lib/dummyData';
+import { dummyProducts, colorFilters } from '../lib/dummyData';
 import { staggerContainerVariants, staggerItemVariants } from '../lib/animations';
 
 const Search: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeColorFilter, setActiveColorFilter] = useState('All Colors');
-  const [activeWeightFilter, setActiveWeightFilter] = useState('All Weights');
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -30,11 +29,7 @@ const Search: React.FC = () => {
     const matchesColor = activeColorFilter === 'All Colors' ||
       product.color === activeColorFilter;
 
-    // Weight filter
-    const matchesWeight = activeWeightFilter === 'All Weights' ||
-      product.weight === activeWeightFilter;
-
-    return matchesSearch && matchesColor && matchesWeight;
+    return matchesSearch && matchesColor;
   });
 
   // Handle search submission
@@ -93,22 +88,7 @@ const Search: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-medium mb-2">Weight</h3>
-            <div className="flex flex-wrap gap-2">
-              {weightFilters.map(weight => (
-                <FilterButton
-                  key={weight}
-                  label={weight}
-                  active={activeWeightFilter === weight}
-                  onClick={() => {
-                    setActiveWeightFilter(weight);
-                    if (hasSearched) handleSearch(new Event('submit') as any);
-                  }}
-                />
-              ))}
-            </div>
-          </div>
+
         </div>
 
         {/* Results */}

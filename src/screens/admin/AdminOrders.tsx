@@ -11,6 +11,7 @@ import {
   Filter
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { formatPrice } from '../../lib/formatters';
 import { useToast } from '../../contexts/ToastContext';
 
 interface Order {
@@ -277,7 +278,7 @@ const AdminOrders: React.FC = () => {
                       {new Date(order.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      ${order.total.toFixed(2)}
+                      {formatPrice(order.total)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(order.status)}
@@ -370,7 +371,7 @@ const AdminOrders: React.FC = () => {
                   <h3 className="font-medium mb-2">Order Information</h3>
                   <p className="text-sm">Date: {new Date(selectedOrder.created_at).toLocaleString()}</p>
                   <p className="text-sm">Status: {selectedOrder.status}</p>
-                  <p className="text-sm">Total: ${selectedOrder.total.toFixed(2)}</p>
+                  <p className="text-sm">Total: {formatPrice(selectedOrder.total)}</p>
                 </div>
               </div>
 
@@ -415,13 +416,13 @@ const AdminOrders: React.FC = () => {
                             {item.variant?.name || '-'}
                           </td>
                           <td className="px-4 py-3 text-sm">
-                            ${item.price.toFixed(2)}
+                            {formatPrice(item.price)}
                           </td>
                           <td className="px-4 py-3 text-sm">
                             {item.quantity}
                           </td>
                           <td className="px-4 py-3 text-sm font-medium">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            {formatPrice(item.price * item.quantity)}
                           </td>
                         </tr>
                       ))}
@@ -432,7 +433,7 @@ const AdminOrders: React.FC = () => {
 
               <div className="mt-6 flex justify-between items-center">
                 <div>
-                  <h3 className="font-medium">Total: ${selectedOrder.total.toFixed(2)}</h3>
+                  <h3 className="font-medium">Total: {formatPrice(selectedOrder.total)}</h3>
                 </div>
 
                 <div className="flex gap-2">
