@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, AlertCircle } from 'lucide-react';
+import { ShoppingCart, AlertCircle, Trash2 } from 'lucide-react';
 import AnimatedContainer from '../components/ui/AnimatedContainer';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -8,7 +8,7 @@ import { useCart } from '../hooks/useCart';
 
 const Cart: React.FC = () => {
   const { user } = useAuthContext();
-  const { cartItems, loading } = useCart();
+  const { cartItems, loading, updateQuantity, removeFromCart } = useCart();
 
   if (!user) {
     return <Navigate to="/profile" replace />;
@@ -33,20 +33,20 @@ const Cart: React.FC = () => {
       <AnimatedContainer>
         <div className="py-4">
           <h1 className="text-2xl font-bold mb-6">Your Cart</h1>
-          
+
           <div className="bg-white rounded-xl shadow-sm p-6 text-center">
             <div className="flex flex-col items-center justify-center py-8">
               <div className="w-16 h-16 bg-krosh-blue/20 rounded-full flex items-center justify-center mb-4">
                 <ShoppingCart size={30} className="text-krosh-text" />
               </div>
-              
+
               <h2 className="text-xl font-medium mb-2">Your cart is empty</h2>
               <p className="text-gray-500 mb-6 max-w-xs mx-auto">
                 Start adding some items to your cart!
               </p>
-              
-              <Link 
-                to="/shop" 
+
+              <Link
+                to="/shop"
                 className="px-6 py-2 bg-krosh-lavender text-krosh-text rounded-lg font-medium hover:opacity-90 transition-opacity"
               >
                 Browse Products
@@ -58,12 +58,33 @@ const Cart: React.FC = () => {
     );
   }
 
+  const handleDecreaseQuantity = (item: any) => {
+    if (item.quantity > 1) {
+      updateQuantity(item.id, item.quantity - 1);
+    } else {
+      removeFromCart(item.id);
+    }
+  };
+
+  const handleIncreaseQuantity = (item: any) => {
+    updateQuantity(item.id, item.quantity + 1);
+  };
+
+  const handleRemoveItem = (itemId: string) => {
+    removeFromCart(itemId);
+  };
+
+  // Calculate total price
+  const totalPrice = cartItems.reduce((total, item) => {
+    return total + (Number(item.product.price) * item.quantity);
+  }, 0);
+
   return (
     <AnimatedContainer>
       <div className="py-4">
         <h1 className="text-2xl font-bold mb-6">Your Cart</h1>
-        
-        <div className="space-y-4">
+
+        <div className="space-y-4 mb-6">
           {cartItems.map((item) => (
             <div key={item.id} className="bg-white rounded-lg shadow-sm p-4 flex items-center gap-4">
               <img
@@ -78,13 +99,49 @@ const Cart: React.FC = () => {
                 </p>
                 <p className="font-semibold">${Number(item.product.price).toFixed(2)}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <button className="px-3 py-1 rounded bg-gray-100">-</button>
-                <span>{item.quantity}</span>
-                <button className="px-3 py-1 rounded bg-gray-100">+</button>
+              <div className="flex flex-col items-end gap-2">
+                <button
+                  onClick={() => handleRemoveItem(item.id)}
+                  className="text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 size={18} />
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleDecreaseQuantity(item)}
+                    className="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    -
+                  </button>
+                  <span>{item.quantity}</span>
+                  <button
+                    onClick={() => handleIncreaseQuantity(item)}
+                    className="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="flex justify-between items-center py-2 border-b">
+            <span className="text-gray-600">Subtotal</span>
+            <span className="font-medium">${totalPrice.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-b">
+            <span className="text-gray-600">Shipping</span>
+            <span className="font-medium">$0.00</span>
+          </div>
+          <div className="flex justify-between items-center py-2 mt-2">
+            <span className="text-lg font-semibold">Total</span>
+            <span className="text-lg font-bold">${totalPrice.toFixed(2)}</span>
+          </div>
+          <button className="w-full mt-4 py-3 bg-krosh-pink text-white rounded-lg font-medium hover:opacity-90 transition-opacity">
+            Proceed to Checkout
+          </button>
         </div>
       </div>
     </AnimatedContainer>

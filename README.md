@@ -10,6 +10,7 @@ Krosh is an elegant eCommerce platform for yarn and crochet enthusiasts. This pr
 
 - **React** - Component-based UI library
 - **TypeScript** - Type safety and improved developer experience
+- **Redux Toolkit** - State management for predictable application state
 - **Tailwind CSS** - Utility-first CSS framework with custom pastel palette
 - **Framer Motion** - Animation library for subtle UI interactions
 - **React Router** - Navigation and routing
@@ -30,6 +31,11 @@ Krosh is an elegant eCommerce platform for yarn and crochet enthusiasts. This pr
       - PromoSection.tsx
       - AnimatedContainer.tsx
       - FilterButton.tsx
+  /redux
+    /slices
+      - cartSlice.ts
+    - store.ts
+    - hooks.ts
   /screens
     - Home.tsx
     - Shop.tsx
@@ -38,9 +44,17 @@ Krosh is an elegant eCommerce platform for yarn and crochet enthusiasts. This pr
     - Cart.tsx
     - Admin.tsx
     - NotFound.tsx
+  /hooks
+    - useCart.ts
+  /contexts
+    - AuthContext.tsx
+    - ToastContext.tsx
   /lib
     - animations.ts
     - dummyData.ts
+    - api.ts
+    - auth.ts
+    - supabase.ts
   - App.tsx
   - main.tsx
   - index.css
@@ -87,23 +101,10 @@ This repository represents Phase 0 (UI Scaffold) of the Krosh project. Future ph
 - **Phase 4**: Payments integration (Stripe, COD)
 - **Phase 5**: Inventory, orders, invoices
 
-## Getting Started
+## COMPLETED TASKS
+1. ✅ Topnavbar in the right now shows first cart icon then Login button/ if logged in then it shows circle user avatar and name of the user
+2. ✅ Sidebar is now open when in desktop mode and closed by default when in mobile mode
+3. ✅ Cart no. of products in the cart is now reflected instantly using Redux
 
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Start the development server: `npm run dev`
-4. Open your browser to the URL displayed in the terminal
-
-## Build
-
-To build the project for production:
-
-```
-npm run build
-```
-
-The built files will be in the `dist` directory.
-
-## License
-
-This project is licensed under the MIT License.
+## PENDING TASKS
+1. 
