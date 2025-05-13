@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, AlertCircle, Trash2 } from 'lucide-react';
 import AnimatedContainer from '../components/ui/AnimatedContainer';
+import SectionHeader from '../components/ui/SectionHeader';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCart } from '../hooks/useCart';
@@ -18,7 +19,7 @@ const Cart: React.FC = () => {
     return (
       <AnimatedContainer>
         <div className="py-4">
-          <h1 className="text-2xl font-bold mb-6">Your Cart</h1>
+          <SectionHeader title="Your Cart" showBackButton={true} />
           <div className="animate-pulse">
             <div className="h-32 bg-gray-200 rounded-lg mb-4" />
             <div className="h-32 bg-gray-200 rounded-lg mb-4" />
@@ -32,7 +33,7 @@ const Cart: React.FC = () => {
     return (
       <AnimatedContainer>
         <div className="py-4">
-          <h1 className="text-2xl font-bold mb-6">Your Cart</h1>
+          <SectionHeader title="Your Cart" showBackButton={true} />
 
           <div className="bg-white rounded-xl shadow-sm p-6 text-center">
             <div className="flex flex-col items-center justify-center py-8">
@@ -82,7 +83,7 @@ const Cart: React.FC = () => {
   return (
     <AnimatedContainer>
       <div className="py-4">
-        <h1 className="text-2xl font-bold mb-6">Your Cart</h1>
+        <SectionHeader title="Your Cart" showBackButton={true} />
 
         <div className="space-y-4 mb-6">
           {cartItems.map((item) => (

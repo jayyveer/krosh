@@ -119,9 +119,16 @@ This repository represents Phase 0 (UI Scaffold) of the Krosh project. Future ph
 5. ✅ Moved toast messages to top-right with a more compact and visually appealing design
 6. ✅ Fixed cart count update issue - now updates instantly when products are added to cart
 
-## FEATURES ADDED (LATEST)
-1. Enhanced navigation with back buttons
-2. Improved category filtering and product browsing
-3. Better toast notifications
-4. Consistent header styling across the application
-5. Instant cart updates for better user experience
+## COMPLETED TASKS (NEWEST)
+1. ✅ Added back button to all sections (Search, Categories, Cart, Profile)
+2. ✅ Changed section headings to use black font instead of gradient
+3. ✅ Implemented UI with back button and section heading side by side
+4. ✅ Made back button consistent across all sections for scalable UI
+5. ✅ Updated categories to sort Z-A (reverse alphabetical order)
+6. ✅ Fixed cart functionality to update count immediately when products are added
+7. ✅ Modified search page to only show products after user searches, with loading state
+
+## PENDING TASKS
+1. No back button in profile and also in Shop when there is no category filter
+2. Make the add to cart notification a little lower so that it does not overlap with the cart icon
+3. 

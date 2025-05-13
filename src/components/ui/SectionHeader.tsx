@@ -39,8 +39,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
             <ChevronLeft size={20} />
           </motion.button>
         )}
-        <motion.h1 
-          className="text-2xl font-bold bg-gradient-to-r from-krosh-pink to-krosh-lavender bg-clip-text text-transparent"
+        <motion.h1
+          className="text-2xl font-bold text-gray-900" // Changed to black font
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
@@ -48,7 +48,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
           {title}
         </motion.h1>
       </div>
-      
+
       {rightContent && (
         <div className="flex items-center">
           {rightContent}

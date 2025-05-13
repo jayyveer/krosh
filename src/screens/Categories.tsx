@@ -29,7 +29,7 @@ const Categories: React.FC = () => {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
-        .order('name');
+        .order('name', { ascending: false }); // Sort Z-A
 
       if (error) throw error;
       setCategories(data || []);
@@ -45,7 +45,7 @@ const Categories: React.FC = () => {
     return (
       <AnimatedContainer>
         <div className="py-4">
-          <SectionHeader title="Categories" showBackButton={false} />
+          <SectionHeader title="Categories" showBackButton={true} />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...Array(8)].map((_, index) => (
               <ProductCardSkeleton key={index} />
@@ -60,7 +60,7 @@ const Categories: React.FC = () => {
     return (
       <AnimatedContainer>
         <div className="py-4">
-          <SectionHeader title="Categories" showBackButton={false} />
+          <SectionHeader title="Categories" showBackButton={true} />
           <div className="bg-red-50 p-4 rounded-lg text-red-600">
             {error}
           </div>
@@ -72,7 +72,7 @@ const Categories: React.FC = () => {
   return (
     <AnimatedContainer>
       <div className="py-4">
-        <SectionHeader title="Categories" showBackButton={false} />
+        <SectionHeader title="Categories" showBackButton={true} />
 
         {categories.length === 0 ? (
           <div className="text-center py-12 text-gray-500">

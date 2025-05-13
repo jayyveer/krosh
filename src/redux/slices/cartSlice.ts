@@ -28,24 +28,28 @@ export const fetchCart = createAsyncThunk('cart/fetchCart', async () => {
 
 export const addItemToCart = createAsyncThunk(
   'cart/addItemToCart',
-  async ({ productId, variantId, quantity }: { productId: string; variantId: string; quantity: number }) => {
+  async ({ productId, variantId, quantity }: { productId: string; variantId: string; quantity: number }, { dispatch }) => {
     const result = await addToCart(productId, variantId, quantity);
+    // Immediately fetch the updated cart to ensure UI is in sync
+    dispatch(fetchCart());
     return result;
   }
 );
 
 export const removeItemFromCart = createAsyncThunk(
   'cart/removeItemFromCart',
-  async (itemId: string) => {
+  async (itemId: string, { dispatch }) => {
     await removeFromCart(itemId);
+    // Immediately update the UI by removing the item from state
     return itemId;
   }
 );
 
 export const updateItemQuantity = createAsyncThunk(
   'cart/updateItemQuantity',
-  async ({ itemId, quantity }: { itemId: string; quantity: number }) => {
+  async ({ itemId, quantity }: { itemId: string; quantity: number }, { dispatch }) => {
     await updateCartItemQuantity(itemId, quantity);
+    // Immediately update the UI with the new quantity
     return { itemId, quantity };
   }
 );
@@ -73,20 +77,21 @@ const cartSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch cart';
       })
-      
+
       // Add item to cart
       .addCase(addItemToCart.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(addItemToCart.fulfilled, (state) => {
+        // Note: We're fetching the cart again in the thunk, so we don't need to update items here
         state.loading = false;
       })
       .addCase(addItemToCart.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to add item to cart';
       })
-      
+
       // Remove item from cart
       .addCase(removeItemFromCart.pending, (state) => {
         state.loading = true;
@@ -100,7 +105,7 @@ const cartSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to remove item from cart';
       })
-      
+
       // Update item quantity
       .addCase(updateItemQuantity.pending, (state) => {
         state.loading = true;
