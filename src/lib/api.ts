@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { Database } from './types';
 
 type Product = Database['public']['Tables']['products']['Row'] & {
-  category: { name: string; slug: string };
+  category: { name: string; slug: string; image_url?: string | null };
   variants: Array<Database['public']['Tables']['product_variants']['Row']>;
 };
 
@@ -36,7 +36,7 @@ export async function getProducts(page = 1, limit = 10, categorySlug?: string) {
           .from('products')
           .select(`
             *,
-            category:categories(name, slug),
+            category:categories(name, slug, image_url),
             variants:product_variants(*)
           `, { count: 'exact' })
           .eq('is_visible', true)
@@ -56,7 +56,7 @@ export async function getProducts(page = 1, limit = 10, categorySlug?: string) {
         .from('products')
         .select(`
           *,
-          category:categories(name, slug),
+          category:categories(name, slug, image_url),
           variants:product_variants(*)
         `, { count: 'exact' })
         .eq('is_visible', true)
@@ -82,7 +82,7 @@ export async function getAllProducts() {
     .from('products')
     .select(`
       *,
-      category:categories(name, slug),
+      category:categories(name, slug, image_url),
       variants:product_variants(*)
     `)
     .eq('is_visible', true);
