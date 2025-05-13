@@ -26,9 +26,17 @@ const AdminDebugPage: React.FC = () => {
     try {
       const status = await checkAdminStatus(user.id);
       setAdminStatus(status);
+      console.log('Admin status check result:', status);
     } catch (err) {
       console.error('Error checking admin status:', err);
-      setError('Failed to check admin status');
+      // More detailed error message
+      if (err instanceof Error) {
+        setError('Failed to check admin status: ' + err.message);
+      } else if (typeof err === 'object' && err !== null) {
+        setError('Failed to check admin status: ' + JSON.stringify(err));
+      } else {
+        setError('Failed to check admin status: Unknown error');
+      }
     } finally {
       setLoading(false);
     }
@@ -46,8 +54,25 @@ const AdminDebugPage: React.FC = () => {
         .single();
 
       setDirectCheck({ data, error });
+      console.log('Direct admin check result:', { data, error });
+
+      // Also try a direct SQL query
+      try {
+        const { data: sqlData, error: sqlError } = await supabase.rpc('is_user_admin', {
+          user_id: user.id
+        });
+
+        console.log('SQL admin check result:', { data: sqlData, error: sqlError });
+      } catch (sqlErr) {
+        console.error('Error with SQL admin check:', sqlErr);
+      }
     } catch (err) {
       console.error('Error with direct admin check:', err);
+      if (err instanceof Error) {
+        console.error('Error details:', err.message);
+      } else {
+        console.error('Error details:', err);
+      }
     }
   };
 
@@ -101,7 +126,14 @@ const AdminDebugPage: React.FC = () => {
       await checkDirectAdmin();
     } catch (err) {
       console.error('Error making user admin:', err);
-      setError('Failed to make user admin: ' + (err as Error).message);
+      // More detailed error message
+      if (err instanceof Error) {
+        setError('Failed to make user admin: ' + err.message);
+      } else if (typeof err === 'object' && err !== null) {
+        setError('Failed to make user admin: ' + JSON.stringify(err));
+      } else {
+        setError('Failed to make user admin: Unknown error');
+      }
     } finally {
       setLoading(false);
     }

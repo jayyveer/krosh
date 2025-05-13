@@ -82,6 +82,37 @@ export function useAuth() {
     }
 
     try {
+      // First, try using the is_user_admin function
+      try {
+        const { data: isAdminData, error: isAdminError } = await supabase.rpc('is_user_admin', {
+          user_id: userId
+        });
+
+        if (!isAdminError && isAdminData === true) {
+          // User is an admin, now get their role
+          const { data, error } = await supabase
+            .from('admins')
+            .select('role')
+            .eq('id', userId)
+            .single();
+
+          if (!error && data && data.role) {
+            setIsAdmin(true);
+            setAdminRole(data.role as 'superadmin' | 'editor');
+            console.log('Admin check result (via RPC):', {
+              userId,
+              isAdmin: true,
+              role: data.role
+            });
+            return;
+          }
+        }
+      } catch (rpcErr) {
+        console.error('Error using is_user_admin RPC:', rpcErr);
+        // Continue with the fallback method
+      }
+
+      // Fallback: direct query to the admins table
       const { data, error } = await supabase
         .from('admins')
         .select('role')
@@ -105,7 +136,7 @@ export function useAuth() {
         setAdminRole(null);
       }
 
-      console.log('Admin check result:', {
+      console.log('Admin check result (via direct query):', {
         userId,
         isAdmin: isUserAdmin,
         role: isUserAdmin ? data.role : null
