@@ -1,0 +1,41 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
+import Layout from './components/layout/Layout';
+import Home from './screens/Home';
+import Shop from './screens/Shop';
+import Search from './screens/Search';
+import Profile from './screens/Profile';
+import Cart from './screens/Cart';
+import Admin from './screens/Admin';
+import NotFound from './screens/NotFound';
+
+function App() {
+  return (
+    <AuthProvider>
+      <ToastProvider>
+        <Router>
+          <div className="bg-krosh-background min-h-screen text-krosh-text font-sans">
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Home />} />
+                  <Route path="shop" element={<Shop />} />
+                  <Route path="search" element={<Search />} />
+                  <Route path="profile" element={<Profile />} />
+                  <Route path="cart" element={<Cart />} />
+                  <Route path="admin" element={<Admin />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+            </AnimatePresence>
+          </div>
+        </Router>
+      </ToastProvider>
+    </AuthProvider>
+  );
+}
+
+export default App
