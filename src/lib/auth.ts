@@ -148,5 +148,13 @@ export function useAuth() {
     }
   };
 
+  // Debug the current state before returning
+  console.log('useAuth - Current state:', {
+    user: !!user,
+    isAdmin,
+    adminRole,
+    loading
+  });
+
   return { user, loading, isAdmin, adminRole };
 }

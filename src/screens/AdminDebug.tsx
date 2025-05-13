@@ -3,6 +3,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { checkAdminStatus, syncUserData } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import AnimatedContainer from '../components/ui/AnimatedContainer';
+import { syncAdminStatus, forceAdminReload } from '../lib/adminSync';
 
 const AdminDebugPage: React.FC = () => {
   const { user, isAdmin: contextIsAdmin, adminRole } = useAuthContext();
@@ -95,6 +96,41 @@ const AdminDebugPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const syncAdmin = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const result = await syncAdminStatus(user.id);
+
+      if (result.success) {
+        setMessage(result.message);
+      } else {
+        setError(result.message);
+      }
+
+      // Refresh admin status
+      await checkAdmin();
+      await checkDirectAdmin();
+    } catch (err) {
+      console.error('Error syncing admin status:', err);
+      if (err instanceof Error) {
+        setError('Failed to sync admin status: ' + err.message);
+      } else {
+        setError('Failed to sync admin status');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reloadPage = () => {
+    forceAdminReload();
   };
 
   const makeAdmin = async () => {
@@ -234,6 +270,21 @@ const AdminDebugPage: React.FC = () => {
               className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 disabled:opacity-50"
             >
               Make Admin
+            </button>
+
+            <button
+              onClick={syncAdmin}
+              disabled={loading}
+              className="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 disabled:opacity-50"
+            >
+              Sync Admin Status
+            </button>
+
+            <button
+              onClick={reloadPage}
+              className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+            >
+              Reload Page
             </button>
           </div>
         </div>

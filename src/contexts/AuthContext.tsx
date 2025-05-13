@@ -26,5 +26,14 @@ export function useAuthContext() {
   if (context === undefined) {
     throw new Error('useAuthContext must be used within an AuthProvider');
   }
+
+  // Debug the context values
+  console.log('useAuthContext - Current values:', {
+    user: !!context.user,
+    isAdmin: context.isAdmin,
+    adminRole: context.adminRole,
+    loading: context.loading
+  });
+
   return context;
 }
