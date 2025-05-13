@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Trash2, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cardVariants } from '../../lib/animations';
 import { useAuthContext } from '../../contexts/AuthContext';
@@ -14,12 +14,25 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { user } = useAuthContext();
   const { showToast } = useToast();
-  const { addToCart } = useCart();
+  const { addToCart, removeFromCart, cartItems } = useCart();
   const defaultVariant = product.variants?.[0];
   const inStock = defaultVariant?.stock > 0;
 
+  // Check if product is already in cart
+  const isInCart = cartItems.some(item =>
+    item.product.id === product.id && item.variant.id === defaultVariant?.id
+  );
+
+  // Calculate discount percentage if original_price exists
+  const hasDiscount = product.original_price && product.original_price > product.price;
+  const discountPercentage = hasDiscount
+    ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+    : 0;
+
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+
     if (!user) {
       window.location.href = '/login';
       return;
@@ -35,57 +48,111 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
   };
 
+  const handleRemoveFromCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      // Find the cart item to remove
+      const cartItem = cartItems.find(item =>
+        item.product.id === product.id && item.variant.id === defaultVariant?.id
+      );
+
+      if (cartItem) {
+        removeFromCart(cartItem.id);
+        showToast('Removed from cart');
+      }
+    } catch (error) {
+      console.error('Failed to remove from cart:', error);
+      showToast('Failed to remove from cart', 'error');
+    }
+  };
+
   return (
-    <motion.div
-      className="bg-white rounded-xl shadow-sm overflow-hidden h-full flex flex-col"
-      variants={cardVariants}
-      initial="initial"
-      whileHover="hover"
-    >
-      <Link to={`/product/${product.id}`} className="block h-48 overflow-hidden">
-        <img
-          src={product.image_urls?.[0] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
-          alt={product.name}
-          className="w-full h-full object-cover"
-        />
-      </Link>
+    <Link to={`/product/${product.id}`}>
+      <motion.div
+        className="bg-white rounded-xl shadow-sm overflow-hidden h-full flex flex-col"
+        variants={cardVariants}
+        initial="initial"
+        whileHover="hover"
+      >
+        {/* Image container with overlays */}
+        <div className="relative h-40 overflow-hidden">
+          <img
+            src={product.image_urls?.[0] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
+            alt={product.name}
+            className="w-full h-full object-cover"
+          />
 
-      <div className="p-4 flex-1 flex flex-col">
-        <div className="flex-1">
-          <span className="text-xs text-gray-500">{product.category?.name}</span>
-          <h3 className="font-medium text-base mb-1">{product.name}</h3>
-          <p className="font-semibold text-lg mb-2">${Number(product.price).toFixed(2)}</p>
+          {/* Category overlay - bottom left */}
+          {product.category?.name && (
+            <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+              {product.category.name}
+            </div>
+          )}
 
-          {defaultVariant && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              <span className="text-xs bg-krosh-lavender/20 px-2 py-1 rounded-full">
-                {defaultVariant.color}
-              </span>
-              <span className="text-xs bg-krosh-pink/20 px-2 py-1 rounded-full">
-                {defaultVariant.weight}
-              </span>
+          {/* Discount badge - top right */}
+          {hasDiscount && (
+            <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
+              <Tag size={12} className="mr-1" />
+              {discountPercentage}% OFF
             </div>
           )}
         </div>
 
-        <div className="flex justify-between items-center mt-2">
-          {inStock ? (
-            <span className="text-xs text-green-600">In Stock</span>
-          ) : (
-            <span className="text-xs text-red-500">Out of Stock</span>
-          )}
+        <div className="p-3 flex-1 flex flex-col">
+          {/* Product info */}
+          <div className="flex-1">
+            <h3 className="font-medium text-sm mb-1 line-clamp-2 h-10">{product.name}</h3>
 
-          <motion.button
-            className={`p-2 rounded-full ${inStock ? 'bg-krosh-blue/20 text-krosh-text' : 'bg-gray-100 text-gray-400'}`}
-            whileTap={{ scale: 0.95 }}
-            disabled={!inStock}
-            onClick={handleAddToCart}
-          >
-            <ShoppingCart size={18} />
-          </motion.button>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="font-semibold text-base">${Number(product.price).toFixed(2)}</p>
+              {hasDiscount && (
+                <p className="text-sm text-gray-500 line-through">${Number(product.original_price).toFixed(2)}</p>
+              )}
+            </div>
+
+            {defaultVariant && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                <span className="text-xs bg-krosh-lavender/20 px-2 py-0.5 rounded-full">
+                  {defaultVariant.color}
+                </span>
+                <span className="text-xs bg-krosh-pink/20 px-2 py-0.5 rounded-full">
+                  {defaultVariant.weight}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Add/Remove cart button */}
+          {isInCart ? (
+            <motion.button
+              className="w-full py-2 bg-red-100 text-red-600 rounded-lg text-sm font-medium flex items-center justify-center gap-1 mt-2"
+              whileTap={{ scale: 0.98 }}
+              onClick={handleRemoveFromCart}
+              disabled={!inStock}
+            >
+              <Trash2 size={14} />
+              Remove from Cart
+            </motion.button>
+          ) : (
+            <motion.button
+              className={`w-full py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1 mt-2 ${
+                inStock
+                  ? 'bg-krosh-lavender text-white hover:bg-krosh-lavender/90'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleAddToCart}
+              disabled={!inStock}
+            >
+              <ShoppingCart size={14} />
+              {inStock ? 'Add to Cart' : 'Out of Stock'}
+            </motion.button>
+          )}
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </Link>
   );
 };
 

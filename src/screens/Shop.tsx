@@ -5,26 +5,31 @@ import ProductCard from '../components/ui/ProductCard';
 import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
 import FilterButton from '../components/ui/FilterButton';
 import SectionHeader from '../components/ui/SectionHeader';
-import { getProducts } from '../lib/api';
+import { getProducts, getAllProducts } from '../lib/api';
 import { staggerContainerVariants, staggerItemVariants } from '../lib/animations';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 const Shop: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Get category from URL params or location state
   useEffect(() => {
     const categorySlug = searchParams.get('category');
     const categoryName = location.state?.categoryName;
 
-    if (categorySlug && products.length > 0) {
+    if (categorySlug && allProducts.length > 0) {
       // Find the category name from the slug
-      const category = products.find(p => p.category?.slug === categorySlug)?.category?.name;
+      const category = allProducts.find(p => p.category?.slug === categorySlug)?.category?.name;
       if (category) {
         setActiveCategory(category);
       } else if (categoryName) {
@@ -33,33 +38,63 @@ const Shop: React.FC = () => {
     } else if (categoryName) {
       setActiveCategory(categoryName);
     }
-  }, [searchParams, products, location.state]);
+  }, [searchParams, allProducts, location.state]);
 
+  // Load initial products
   useEffect(() => {
     loadProducts();
+    // Also load all products for category filtering
+    loadAllProducts();
   }, []);
 
-  async function loadProducts() {
+  async function loadProducts(pageNum = 1) {
     try {
-      setLoading(true);
-      const data = await getProducts();
-      setProducts(data);
+      if (pageNum === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const result = await getProducts(pageNum);
+
+      if (pageNum === 1) {
+        setProducts(result.data);
+      } else {
+        setProducts(prev => [...prev, ...result.data]);
+      }
+
+      setTotalCount(result.count);
+      setHasMore(result.hasMore);
+      setPage(pageNum);
     } catch (err) {
       setError('Failed to load products');
       console.error(err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }
+
+  async function loadAllProducts() {
+    try {
+      const data = await getAllProducts();
+      setAllProducts(data);
+    } catch (err) {
+      console.error('Failed to load all products for filtering:', err);
+    }
+  }
+
+  const loadMoreProducts = () => {
+    if (!hasMore || loadingMore) return;
+    loadProducts(page + 1);
+  };
 
   const filteredProducts = activeCategory === 'All'
     ? products
     : products.filter(product => product.category?.name === activeCategory);
 
-  const categories = ['All', ...new Set(products.map(p => p.category?.name))];
-
-  // Determine if we should show back button (if we came from categories)
-  const showBackButton = location.state?.categoryName || searchParams.get('category');
+  // Use allProducts for category list to ensure all categories are shown
+  const categories = ['All', ...new Set(allProducts.map(p => p.category?.name))];
 
   // Create title based on active category
   const title = activeCategory === 'All' ? 'Shop' : activeCategory;
@@ -69,7 +104,7 @@ const Shop: React.FC = () => {
       <div className="py-4">
         <SectionHeader
           title={title}
-          showBackButton={!!showBackButton}
+          showBackButton={true} // Always show back button
         />
 
         {/* Category filters */}
@@ -128,6 +163,37 @@ const Shop: React.FC = () => {
         {!loading && filteredProducts.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">No products found in this category.</p>
+          </div>
+        )}
+
+        {/* Load More Button */}
+        {!loading && hasMore && filteredProducts.length > 0 && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={loadMoreProducts}
+              disabled={loadingMore}
+              className="px-6 py-2 bg-krosh-lavender text-white rounded-lg shadow-sm hover:bg-krosh-lavender/90 transition-colors disabled:opacity-70"
+            >
+              {loadingMore ? 'Loading...' : 'Load More Products'}
+            </button>
+          </div>
+        )}
+
+        {/* Loading More Indicator */}
+        {loadingMore && (
+          <div className="flex justify-center mt-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <ProductCardSkeleton key={`more-${i}`} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Products Count */}
+        {!loading && filteredProducts.length > 0 && (
+          <div className="text-center text-gray-500 text-sm mt-6">
+            Showing {filteredProducts.length} of {activeCategory === 'All' ? totalCount : allProducts.filter(p => p.category?.name === activeCategory).length} products
           </div>
         )}
       </div>

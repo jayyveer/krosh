@@ -17,10 +17,10 @@ const Toast: React.FC<ToastProps> = ({ message, type = 'success', onClose }) => 
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: -20, x: 20 }}
+        initial={{ opacity: 0, y: 20, x: 20 }}
         animate={{ opacity: 1, y: 0, x: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className={`fixed top-4 right-4 py-2 px-3 rounded-lg shadow-lg flex items-center gap-2 max-w-xs z-50 ${
+        exit={{ opacity: 0, y: 20 }}
+        className={`fixed top-20 right-4 py-2 px-3 rounded-lg shadow-lg flex items-center gap-2 max-w-xs z-50 ${
           type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
         }`}
       >

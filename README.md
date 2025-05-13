@@ -128,7 +128,23 @@ This repository represents Phase 0 (UI Scaffold) of the Krosh project. Future ph
 6. ✅ Fixed cart functionality to update count immediately when products are added
 7. ✅ Modified search page to only show products after user searches, with loading state
 
+## COMPLETED TASKS (LATEST)
+1. ✅ Added back button to Profile and Shop sections (always visible)
+2. ✅ Adjusted toast notification position to avoid overlapping with cart icon
+3. ✅ Implemented lazy loading for products with "Load More" button and Supabase pagination
+4. ✅ Redesigned product card with:
+   - Smaller, more appropriate image size
+   - Category overlay on bottom left of image
+   - Discount percentage badge on top right
+   - Improved layout with product name, price, and original price
+   - Full-width Add to Cart button that changes to Remove from Cart when in cart
+5. ✅ Created detailed product page with:
+   - Image gallery with thumbnails
+   - Product information and description
+   - Variant selection
+   - Quantity controls
+   - Add/Remove from cart functionality
+   - Related products section
+
 ## PENDING TASKS
-1. No back button in profile and also in Shop when there is no category filter
-2. Make the add to cart notification a little lower so that it does not overlap with the cart icon
-3. 
+1. 

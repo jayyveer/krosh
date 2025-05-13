@@ -13,7 +13,30 @@ type CartItem = {
   quantity: number;
 };
 
-export async function getProducts() {
+export async function getProducts(page = 1, limit = 10) {
+  // Calculate the range for pagination
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  const { data, error, count } = await supabase
+    .from('products')
+    .select(`
+      *,
+      category:categories(name, slug),
+      variants:product_variants(*)
+    `, { count: 'exact' })
+    .eq('is_visible', true)
+    .range(from, to);
+
+  if (error) throw error;
+  return {
+    data: data as Product[],
+    count: count || 0,
+    hasMore: count ? from + limit < count : false
+  };
+}
+
+export async function getAllProducts() {
   const { data, error } = await supabase
     .from('products')
     .select(`

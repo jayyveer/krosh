@@ -11,6 +11,7 @@ import Profile from './screens/Profile';
 import Login from './screens/Login';
 import Cart from './screens/Cart';
 import Categories from './screens/Categories';
+import ProductDetail from './screens/ProductDetail';
 import Admin from './screens/Admin';
 import NotFound from './screens/NotFound';
 
@@ -33,6 +34,7 @@ function App() {
                   <Route path="categories" element={<Categories />} />
                   <Route path="profile" element={<Profile />} />
                   <Route path="cart" element={<Cart />} />
+                  <Route path="product/:id" element={<ProductDetail />} />
                   <Route path="admin" element={<Admin />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
