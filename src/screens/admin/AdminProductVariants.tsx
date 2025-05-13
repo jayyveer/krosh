@@ -14,6 +14,7 @@ interface Product {
   image_urls: string[] | null;
   is_visible: boolean;
   created_at: string;
+  default_variant_id: string | null;
   category?: {
     name: string;
     slug: string;
@@ -25,10 +26,9 @@ interface ProductVariant {
   product_id: string;
   name: string;
   color: string | null;
-  size: string | null;
   stock: number;
-  sku: string | null;
   created_at: string;
+  image_urls?: string[] | null;
 }
 
 const AdminProductVariants: React.FC = () => {
@@ -45,13 +45,20 @@ const AdminProductVariants: React.FC = () => {
   // Form state
   const [name, setName] = useState('');
   const [color, setColor] = useState('');
-  const [size, setSize] = useState('');
   const [stock, setStock] = useState('');
-  const [sku, setSku] = useState('');
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // Toast notification function
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setError(type === 'error' ? message : null);
+    if (type === 'success') {
+      // You could implement a proper toast notification system here
+      alert(message);
+    }
+  };
 
   useEffect(() => {
     if (productId) {
@@ -108,9 +115,7 @@ const AdminProductVariants: React.FC = () => {
     setEditingVariant(null);
     setName('');
     setColor('');
-    setSize('');
     setStock('0');
-    setSku('');
     setImageFiles([]);
     setImagePreviews([]);
     setExistingImages([]);
@@ -121,9 +126,7 @@ const AdminProductVariants: React.FC = () => {
     setEditingVariant(variant);
     setName(variant.name);
     setColor(variant.color || '');
-    setSize(variant.size || '');
     setStock(variant.stock.toString());
-    setSku(variant.sku || '');
     setImageFiles([]);
     setImagePreviews([]);
     setExistingImages(variant.image_urls || []);
@@ -187,9 +190,7 @@ const AdminProductVariants: React.FC = () => {
         product_id: productId,
         name,
         color: color || null,
-        size: size || null,
         stock: parseInt(stock),
-        sku: sku || null,
         image_urls: allImageUrls.length > 0 ? allImageUrls : null
       };
 
@@ -444,19 +445,6 @@ const AdminProductVariants: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Size</label>
-                <input
-                  type="text"
-                  value={size}
-                  onChange={(e) => setSize(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="e.g. S, M, L, XL"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
                 <label className="block text-sm font-medium mb-1">Stock</label>
                 <input
                   type="number"
@@ -466,17 +454,6 @@ const AdminProductVariants: React.FC = () => {
                   placeholder="0"
                   min="0"
                   required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">SKU</label>
-                <input
-                  type="text"
-                  value={sku}
-                  onChange={(e) => setSku(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="Optional product code"
                 />
               </div>
             </div>
@@ -597,9 +574,7 @@ const AdminProductVariants: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -631,13 +606,7 @@ const AdminProductVariants: React.FC = () => {
                       {variant.color || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {variant.size || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {variant.stock}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {variant.sku || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex gap-2">

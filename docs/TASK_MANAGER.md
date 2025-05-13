@@ -182,7 +182,7 @@ This document outlines the pending tasks for the Krosh e-commerce platform in or
 
 | Task ID | Task Name | Status | Completion Date | Notes |
 |---------|-----------|--------|----------------|-------|
-| 1 | Fix Product Variant Schema Issue | Pending | | |
+| 1 | Fix Product Variant Schema Issue | Completed | 2023-07-10 | Removed SKU and size fields from product_variants UI in AdminProductVariants.tsx |
 | 2 | Fix Disabled Button Styling | Pending | | |
 | 3 | Implement User Registration | Pending | | |
 | 4 | Complete Orders Page in Admin | Pending | | |
