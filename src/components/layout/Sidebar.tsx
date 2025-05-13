@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, ShoppingBag, Search, Info, Package, ShoppingCart, X, LogOut, Grid3X3 } from 'lucide-react';
+import { Home, ShoppingBag, Search, Info, Package, ShoppingCart, X, LogOut, Grid3X3, Settings } from 'lucide-react';
 import { sidebarVariants } from '../../lib/animations';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { signOut } from '../../lib/auth';
@@ -12,7 +12,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
-  const { user } = useAuthContext();
+  const { user, isAdmin } = useAuthContext();
 
   const menuItems = [
     { name: 'Home', path: '/', icon: <Home size={20} /> },
@@ -22,6 +22,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
     { name: 'Orders', path: '/orders', icon: <Package size={20} /> },
     { name: 'Cart', path: '/cart', icon: <ShoppingCart size={20} /> },
     { name: 'About', path: '/about', icon: <Info size={20} /> },
+    // Only show admin link to admin users
+    ...(isAdmin ? [{ name: 'Admin', path: '/admin-access', icon: <Settings size={20} /> }] : []),
   ];
 
   const handleLogout = async () => {

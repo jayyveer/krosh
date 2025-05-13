@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import Layout from './components/layout/Layout';
+import AdminLayout from './components/admin/AdminLayout';
 import Home from './screens/Home';
 import Shop from './screens/Shop';
 import Search from './screens/Search';
@@ -12,8 +13,12 @@ import Login from './screens/Login';
 import Cart from './screens/Cart';
 import Categories from './screens/Categories';
 import ProductDetail from './screens/ProductDetail';
-import Admin from './screens/Admin';
-import AdminDebug from './screens/AdminDebug';
+import AdminDashboard from './screens/admin/AdminDashboard';
+import AdminProducts from './screens/admin/AdminProducts';
+import AdminCategories from './screens/admin/AdminCategories';
+import AdminUsers from './screens/admin/AdminUsers';
+import AdminOrders from './screens/admin/AdminOrders';
+import AdminSettings from './screens/admin/AdminSettings';
 import NotFound from './screens/NotFound';
 
 function App() {
@@ -27,7 +32,18 @@ function App() {
                 {/* Login route outside of Layout */}
                 <Route path="/login" element={<Login />} />
 
-                {/* Routes with Layout (header, sidebar, bottom tabs) */}
+                {/* Admin routes with AdminLayout */}
+                <Route path="/admin-access" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="categories" element={<AdminCategories />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+
+                {/* Store routes with Layout (header, sidebar, bottom tabs) */}
                 <Route path="/" element={<Layout />}>
                   <Route index element={<Home />} />
                   <Route path="shop" element={<Shop />} />
@@ -36,8 +52,6 @@ function App() {
                   <Route path="profile" element={<Profile />} />
                   <Route path="cart" element={<Cart />} />
                   <Route path="product/:id" element={<ProductDetail />} />
-                  <Route path="admin" element={<Admin />} />
-                  <Route path="admin-debug" element={<AdminDebug />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>
