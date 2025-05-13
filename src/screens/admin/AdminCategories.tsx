@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, Image, FolderTree } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { uploadImage, deleteImage } from '../../lib/imageUpload';
 
 interface Category {
   id: string;
@@ -119,19 +120,18 @@ const AdminCategories: React.FC = () => {
 
       // Upload image if a new one is selected
       if (imageFile) {
-        const fileName = `category-${Date.now()}-${imageFile.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('category-images')
-          .upload(fileName, imageFile);
+        try {
+          // Delete the old image if it exists and we're updating with a new one
+          if (editingCategory?.image_url) {
+            await deleteImage(editingCategory.image_url);
+          }
 
-        if (uploadError) throw uploadError;
-
-        // Get public URL
-        const { data: publicUrlData } = supabase.storage
-          .from('category-images')
-          .getPublicUrl(fileName);
-
-        imageUrl = publicUrlData.publicUrl;
+          // Use the uploadImage utility function
+          imageUrl = await uploadImage(imageFile, 'categories');
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError);
+          throw uploadError;
+        }
       }
 
       if (editingCategory) {
@@ -181,12 +181,25 @@ const AdminCategories: React.FC = () => {
     }
 
     try {
+      // Get the category to delete (to get the image URL)
+      const { data: categoryToDelete } = await supabase
+        .from('categories')
+        .select('image_url')
+        .eq('id', id)
+        .single();
+
+      // Delete the category
       const { error } = await supabase
         .from('categories')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      // Delete the category image if it exists
+      if (categoryToDelete?.image_url) {
+        await deleteImage(categoryToDelete.image_url);
+      }
 
       // Refresh categories
       await fetchCategories();
