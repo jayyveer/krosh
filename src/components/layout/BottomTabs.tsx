@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, ShoppingBag, Search, User, Grid3X3 } from 'lucide-react';
+import { Home, ShoppingCart, Search, User, Grid3X3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const BottomTabs: React.FC = () => {
@@ -8,7 +8,6 @@ const BottomTabs: React.FC = () => {
     { name: 'Home', path: '/', icon: <Home size={20} /> },
     { name: 'Search', path: '/search', icon: <Search size={20} /> },
     { name: 'Categories', path: '/categories', icon: <Grid3X3 size={20} /> },
-    { name: 'Shop', path: '/shop', icon: <ShoppingBag size={20} /> },
     { name: 'Profile', path: '/profile', icon: <User size={20} /> },
   ];
 
@@ -19,7 +18,7 @@ const BottomTabs: React.FC = () => {
       animate={{ y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <ul className="h-full grid grid-cols-5">
+      <ul className="h-full grid grid-cols-4">
         {tabs.map(tab => (
           <li key={tab.name} className="h-full">
             <NavLink

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface ToastProps {
   message: string;
@@ -17,19 +17,24 @@ const Toast: React.FC<ToastProps> = ({ message, type = 'success', onClose }) => 
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 50 }}
-        className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg flex items-center gap-2 ${
-          type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        initial={{ opacity: 0, y: -20, x: 20 }}
+        animate={{ opacity: 1, y: 0, x: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className={`fixed top-4 right-4 py-2 px-3 rounded-lg shadow-lg flex items-center gap-2 max-w-xs z-50 ${
+          type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
         }`}
       >
-        <span>{message}</span>
+        {type === 'success' ? (
+          <CheckCircle size={16} className="text-green-500 flex-shrink-0" />
+        ) : (
+          <AlertCircle size={16} className="text-red-500 flex-shrink-0" />
+        )}
+        <span className="text-sm font-medium flex-1">{message}</span>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-white/20 rounded-full transition-colors"
+          className="p-1 hover:bg-gray-200/50 rounded-full transition-colors flex-shrink-0"
         >
-          <X size={16} />
+          <X size={14} />
         </button>
       </motion.div>
     </AnimatePresence>

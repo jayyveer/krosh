@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, MapPin, LogOut, Edit, Plus } from 'lucide-react';
 import AnimatedContainer from '../components/ui/AnimatedContainer';
+import SectionHeader from '../components/ui/SectionHeader';
 import { useAuthContext } from '../contexts/AuthContext';
 import { signOut } from '../lib/auth';
 import { Navigate, Link } from 'react-router-dom';
@@ -86,7 +87,7 @@ const Profile: React.FC = () => {
     return (
       <AnimatedContainer>
         <div className="py-4 max-w-md mx-auto">
-          <h1 className="text-2xl font-bold mb-6">Profile</h1>
+          <SectionHeader title="Profile" showBackButton={false} />
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="animate-pulse">
               <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4"></div>
@@ -104,7 +105,7 @@ const Profile: React.FC = () => {
   return (
     <AnimatedContainer>
       <div className="py-4 max-w-md mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Profile</h1>
+        <SectionHeader title="Profile" showBackButton={false} />
 
         {error && (
           <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg mb-4">

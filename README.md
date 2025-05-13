@@ -111,9 +111,17 @@ This repository represents Phase 0 (UI Scaffold) of the Krosh project. Future ph
 7. ✅ Profile section now shows user details (name, email, phone, addresses)
 8. ✅ Updated bottom tabs to show Home, Search, Categories, Shop, and Profile
 
-## PENDING TASKS
-1. Remove Shop from the bottom tab and when user selects any category from categories tab it should show products of that category only after applying filter of that category.
-2. Apply a back button to sections which takes them back t where they cam from 
-3. Style heading a little better Profile,Categories etc doesnt look nice at the top style better with back button 
-4. When the product is added to cart the toast message it shown at the bottom show it at the top right and a small version only
-5. When the product is added to the cart the product cart does not show the upodated count, it only shows when i go to the cart page then it gets updated
+## COMPLETED TASKS (LATEST)
+1. ✅ Removed Shop from the bottom tab and replaced with Cart
+2. ✅ Added category filtering functionality - when user selects a category, it shows products of that category only
+3. ✅ Applied back button to sections which takes users back to where they came from
+4. ✅ Styled headings better with consistent design and back button integration
+5. ✅ Moved toast messages to top-right with a more compact and visually appealing design
+6. ✅ Fixed cart count update issue - now updates instantly when products are added to cart
+
+## FEATURES ADDED (LATEST)
+1. Enhanced navigation with back buttons
+2. Improved category filtering and product browsing
+3. Better toast notifications
+4. Consistent header styling across the application
+5. Instant cart updates for better user experience

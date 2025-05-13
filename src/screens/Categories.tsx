@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import AnimatedContainer from '../components/ui/AnimatedContainer';
 import { supabase } from '../lib/supabase';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
+import SectionHeader from '../components/ui/SectionHeader';
 
 interface Category {
   id: string;
@@ -44,7 +45,7 @@ const Categories: React.FC = () => {
     return (
       <AnimatedContainer>
         <div className="py-4">
-          <h1 className="text-2xl font-bold mb-6">Categories</h1>
+          <SectionHeader title="Categories" showBackButton={false} />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...Array(8)].map((_, index) => (
               <ProductCardSkeleton key={index} />
@@ -59,7 +60,7 @@ const Categories: React.FC = () => {
     return (
       <AnimatedContainer>
         <div className="py-4">
-          <h1 className="text-2xl font-bold mb-6">Categories</h1>
+          <SectionHeader title="Categories" showBackButton={false} />
           <div className="bg-red-50 p-4 rounded-lg text-red-600">
             {error}
           </div>
@@ -71,8 +72,8 @@ const Categories: React.FC = () => {
   return (
     <AnimatedContainer>
       <div className="py-4">
-        <h1 className="text-2xl font-bold mb-6">Categories</h1>
-        
+        <SectionHeader title="Categories" showBackButton={false} />
+
         {categories.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <p>No categories found</p>
@@ -80,19 +81,20 @@ const Categories: React.FC = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {categories.map((category) => (
-              <Link 
-                key={category.id} 
+              <Link
+                key={category.id}
                 to={`/shop?category=${category.slug}`}
+                state={{ categoryName: category.name }}
                 className="block"
               >
-                <motion.div 
+                <motion.div
                   className="bg-white rounded-lg shadow-sm overflow-hidden h-full"
                   whileHover={{ y: -5, transition: { duration: 0.2 } }}
                 >
                   <div className="aspect-square bg-krosh-lavender/20 relative">
                     {category.image_url ? (
-                      <img 
-                        src={category.image_url} 
+                      <img
+                        src={category.image_url}
                         alt={category.name}
                         className="w-full h-full object-cover"
                       />
