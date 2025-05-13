@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, ArrowLeft, Package } from 'lucide-react';
+import { Plus, Pencil, Trash2, ArrowLeft, Package, Image } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { uploadImage, deleteImage } from '../../lib/imageUpload';
 
 interface Product {
   id: string;
@@ -33,33 +34,36 @@ interface ProductVariant {
 const AdminProductVariants: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
-  
+
   const [product, setProduct] = useState<Product | null>(null);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null);
-  
+
   // Form state
   const [name, setName] = useState('');
   const [color, setColor] = useState('');
   const [size, setSize] = useState('');
   const [stock, setStock] = useState('');
   const [sku, setSku] = useState('');
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  
+
   useEffect(() => {
     if (productId) {
       fetchProduct();
       fetchVariants();
     }
   }, [productId]);
-  
+
   const fetchProduct = async () => {
     try {
       if (!productId) return;
-      
+
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -68,29 +72,29 @@ const AdminProductVariants: React.FC = () => {
         `)
         .eq('id', productId)
         .single();
-        
+
       if (error) throw error;
-      
+
       setProduct(data);
     } catch (err) {
       console.error('Error fetching product:', err);
       setError('Failed to load product');
     }
   };
-  
+
   const fetchVariants = async () => {
     try {
       if (!productId) return;
-      
+
       setLoading(true);
       const { data, error } = await supabase
         .from('product_variants')
         .select('*')
         .eq('product_id', productId)
         .order('name');
-        
+
       if (error) throw error;
-      
+
       setVariants(data || []);
     } catch (err) {
       console.error('Error fetching variants:', err);
@@ -99,7 +103,7 @@ const AdminProductVariants: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   const handleAddVariant = () => {
     setEditingVariant(null);
     setName('');
@@ -107,9 +111,12 @@ const AdminProductVariants: React.FC = () => {
     setSize('');
     setStock('0');
     setSku('');
+    setImageFiles([]);
+    setImagePreviews([]);
+    setExistingImages([]);
     setShowForm(true);
   };
-  
+
   const handleEditVariant = (variant: ProductVariant) => {
     setEditingVariant(variant);
     setName(variant.name);
@@ -117,56 +124,129 @@ const AdminProductVariants: React.FC = () => {
     setSize(variant.size || '');
     setStock(variant.stock.toString());
     setSku(variant.sku || '');
+    setImageFiles([]);
+    setImagePreviews([]);
+    setExistingImages(variant.image_urls || []);
     setShowForm(true);
   };
-  
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newFiles = Array.from(files);
+    setImageFiles(prev => [...prev, ...newFiles]);
+
+    // Create previews
+    newFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviews(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveExistingImage = (index: number) => {
+    setExistingImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name || stock === '') {
       setError('Name and stock are required');
       return;
     }
-    
+
     try {
       setSubmitting(true);
-      
+
+      // Upload new images
+      const uploadedImageUrls: string[] = [];
+
+      for (const file of imageFiles) {
+        try {
+          const imageUrl = await uploadImage(file, 'products');
+          uploadedImageUrls.push(imageUrl);
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError);
+          throw uploadError;
+        }
+      }
+
+      // Combine existing and new images
+      const allImageUrls = [...existingImages, ...uploadedImageUrls];
+
       const variantData = {
         product_id: productId,
         name,
         color: color || null,
         size: size || null,
         stock: parseInt(stock),
-        sku: sku || null
+        sku: sku || null,
+        image_urls: allImageUrls.length > 0 ? allImageUrls : null
       };
-      
+
       if (editingVariant) {
         // Update existing variant
         const { error: updateError } = await supabase
           .from('product_variants')
           .update(variantData)
           .eq('id', editingVariant.id);
-          
+
         if (updateError) {
           console.error('Error updating variant:', updateError);
           throw updateError;
         }
+
+        // If this is the only variant, set it as the default for the product
+        if (!product?.default_variant_id) {
+          const { error: updateProductError } = await supabase
+            .from('products')
+            .update({ default_variant_id: editingVariant.id })
+            .eq('id', productId);
+
+          if (updateProductError) {
+            console.error('Error updating product default variant:', updateProductError);
+          }
+        }
       } else {
         // Create new variant
-        const { error: insertError } = await supabase
+        const { data: newVariant, error: insertError } = await supabase
           .from('product_variants')
-          .insert(variantData);
-          
+          .insert(variantData)
+          .select()
+          .single();
+
         if (insertError) {
           console.error('Error inserting variant:', insertError);
           throw insertError;
         }
+
+        // If this is the first variant, set it as the default for the product
+        if (!product?.default_variant_id && newVariant) {
+          const { error: updateProductError } = await supabase
+            .from('products')
+            .update({ default_variant_id: newVariant.id })
+            .eq('id', productId);
+
+          if (updateProductError) {
+            console.error('Error updating product default variant:', updateProductError);
+          }
+        }
       }
-      
-      // Refresh variants
+
+      // Refresh variants and product
       await fetchVariants();
+      await fetchProduct();
       setShowForm(false);
-      
+
     } catch (err) {
       console.error('Error saving variant:', err);
       setError('Failed to save variant');
@@ -174,29 +254,83 @@ const AdminProductVariants: React.FC = () => {
       setSubmitting(false);
     }
   };
-  
+
   const handleDeleteVariant = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this variant?')) {
       return;
     }
-    
+
     try {
+      // Get the variant to delete (to get the image URLs)
+      const { data: variantToDelete } = await supabase
+        .from('product_variants')
+        .select('image_urls')
+        .eq('id', id)
+        .single();
+
+      // Check if this is the last variant
+      const { data: variantCount, error: countError } = await supabase
+        .from('product_variants')
+        .select('id', { count: 'exact' })
+        .eq('product_id', productId);
+
+      if (countError) throw countError;
+
+      if (variantCount && variantCount.length <= 1) {
+        setError('Cannot delete the last variant of a product. Products must have at least one variant.');
+        return;
+      }
+
+      // Check if this is the default variant
+      if (product?.default_variant_id === id) {
+        // Find another variant to set as default
+        const { data: otherVariant } = await supabase
+          .from('product_variants')
+          .select('id')
+          .eq('product_id', productId)
+          .neq('id', id)
+          .limit(1)
+          .single();
+
+        if (otherVariant) {
+          // Update the product's default variant
+          const { error: updateError } = await supabase
+            .from('products')
+            .update({ default_variant_id: otherVariant.id })
+            .eq('id', productId);
+
+          if (updateError) {
+            console.error('Error updating product default variant:', updateError);
+            throw updateError;
+          }
+        }
+      }
+
+      // Delete the variant
       const { error } = await supabase
         .from('product_variants')
         .delete()
         .eq('id', id);
-        
+
       if (error) throw error;
-      
-      // Refresh variants
+
+      // Delete the variant images if they exist
+      if (variantToDelete?.image_urls) {
+        for (const imageUrl of variantToDelete.image_urls) {
+          await deleteImage(imageUrl);
+        }
+      }
+
+      // Refresh variants and product
       await fetchVariants();
-      
+      await fetchProduct();
+
     } catch (err) {
       console.error('Error deleting variant:', err);
       setError('Failed to delete variant');
     }
   };
-  
+
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
@@ -210,11 +344,11 @@ const AdminProductVariants: React.FC = () => {
           {product ? `Variants for ${product.name}` : 'Product Variants'}
         </h1>
       </div>
-      
+
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
           {error}
-          <button 
+          <button
             className="ml-2 text-red-800 font-medium"
             onClick={() => setError(null)}
           >
@@ -222,15 +356,15 @@ const AdminProductVariants: React.FC = () => {
           </button>
         </div>
       )}
-      
+
       {/* Product Info */}
       {product && (
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
           <div className="flex items-center gap-4">
             {product.image_urls && product.image_urls.length > 0 ? (
-              <img 
-                src={product.image_urls[0]} 
-                alt={product.name} 
+              <img
+                src={product.image_urls[0]}
+                alt={product.name}
                 className="w-16 h-16 rounded object-cover"
               />
             ) : (
@@ -249,7 +383,7 @@ const AdminProductVariants: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-semibold">Variants</h2>
         <button
@@ -260,13 +394,13 @@ const AdminProductVariants: React.FC = () => {
           Add Variant
         </button>
       </div>
-      
+
       {showForm ? (
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <h3 className="text-lg font-semibold mb-4">
             {editingVariant ? 'Edit Variant' : 'Add New Variant'}
           </h3>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Name</label>
@@ -279,7 +413,7 @@ const AdminProductVariants: React.FC = () => {
                 required
               />
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Color</label>
@@ -291,7 +425,7 @@ const AdminProductVariants: React.FC = () => {
                   placeholder="e.g. Red, Blue, Green"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">Size</label>
                 <input
@@ -303,7 +437,7 @@ const AdminProductVariants: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Stock</label>
@@ -317,7 +451,7 @@ const AdminProductVariants: React.FC = () => {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium mb-1">SKU</label>
                 <input
@@ -329,7 +463,79 @@ const AdminProductVariants: React.FC = () => {
                 />
               </div>
             </div>
-            
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Images</label>
+
+              {/* Existing Images */}
+              {existingImages.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-500 mb-2">Existing Images</p>
+                  <div className="flex flex-wrap gap-4">
+                    {existingImages.map((url, index) => (
+                      <div key={index} className="w-24 h-24 relative">
+                        <img
+                          src={url}
+                          alt={`Variant ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveExistingImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* New Images */}
+              {imagePreviews.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-500 mb-2">New Images</p>
+                  <div className="flex flex-wrap gap-4">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="w-24 h-24 relative">
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Button */}
+              <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <div className="space-y-1 text-center">
+                  <Image className="mx-auto h-12 w-12 text-gray-400" />
+                  <div className="text-sm text-gray-600">
+                    <span className="font-medium text-krosh-lavender">Click to upload</span> or drag and drop
+                  </div>
+                  <p className="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                </div>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageChange}
+                />
+              </label>
+            </div>
+
             <div className="flex justify-end gap-3 pt-4">
               <button
                 type="button"
@@ -371,6 +577,7 @@ const AdminProductVariants: React.FC = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
@@ -383,7 +590,25 @@ const AdminProductVariants: React.FC = () => {
                 {variants.map((variant) => (
                   <tr key={variant.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
+                      {variant.image_urls && variant.image_urls.length > 0 ? (
+                        <img
+                          src={variant.image_urls[0]}
+                          alt={variant.name}
+                          className="w-10 h-10 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
+                          <Package size={16} className="text-gray-500" />
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium">{variant.name}</div>
+                      {product?.default_variant_id === variant.id && (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                          Default
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {variant.color || '-'}
@@ -399,15 +624,42 @@ const AdminProductVariants: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex gap-2">
+                        {product?.default_variant_id !== variant.id && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const { error } = await supabase
+                                  .from('products')
+                                  .update({ default_variant_id: variant.id })
+                                  .eq('id', productId);
+
+                                if (error) throw error;
+
+                                await fetchProduct();
+                              } catch (err) {
+                                console.error('Error setting default variant:', err);
+                                setError('Failed to set default variant');
+                              }
+                            }}
+                            className="p-1 text-green-600 hover:bg-green-50 rounded"
+                            title="Set as Default"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                          </button>
+                        )}
                         <button
                           onClick={() => handleEditVariant(variant)}
                           className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          title="Edit Variant"
                         >
                           <Pencil size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteVariant(variant.id)}
                           className="p-1 text-red-600 hover:bg-red-50 rounded"
+                          title="Delete Variant"
                         >
                           <Trash2 size={16} />
                         </button>

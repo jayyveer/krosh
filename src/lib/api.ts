@@ -107,8 +107,8 @@ export async function getCart() {
     .select(`
       id,
       quantity,
-      product:products(id, name, price, image_urls),
-      variant:product_variants(id, color, weight)
+      product:products(id, name, price, original_price, size),
+      variant:product_variants(id, name, color, size, weight, stock, image_urls)
     `)
     .eq('user_id', cachedUserId);
 

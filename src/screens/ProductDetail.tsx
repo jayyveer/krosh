@@ -23,6 +23,7 @@ const ProductDetail: React.FC = () => {
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [variantImages, setVariantImages] = useState<string[]>([]);
 
   // Check if product is already in cart
   const isInCart = cartItems.some(item =>
@@ -37,9 +38,22 @@ const ProductDetail: React.FC = () => {
 
   useEffect(() => {
     if (product?.variants && product.variants.length > 0) {
-      setSelectedVariant(product.variants[0]);
+      // Set the default variant (either the one marked as default or the first one)
+      const defaultVariant = product.variants.find((v: any) => v.id === product.default_variant_id) || product.variants[0];
+      setSelectedVariant(defaultVariant);
     }
   }, [product]);
+
+  // Update variant images when selected variant changes
+  useEffect(() => {
+    if (selectedVariant?.image_urls && selectedVariant.image_urls.length > 0) {
+      setVariantImages(selectedVariant.image_urls);
+      setSelectedImage(0); // Reset to first image when variant changes
+    } else {
+      // Fallback to empty array if no images
+      setVariantImages([]);
+    }
+  }, [selectedVariant]);
 
   const fetchProduct = async (productId: string) => {
     try {
@@ -212,8 +226,8 @@ const ProductDetail: React.FC = () => {
             <div className="md:w-2/5 p-3">
               <div className="relative">
                 <img
-                  src={product.image_urls?.[selectedImage] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
-                  alt={product.name}
+                  src={variantImages[selectedImage] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
+                  alt={`${product.name} - ${selectedVariant?.name || ''}`}
                   className="w-full h-56 md:h-64 object-contain rounded-lg"
                   onError={(e) => {
                     // If image fails to load, use placeholder
@@ -231,9 +245,9 @@ const ProductDetail: React.FC = () => {
               </div>
 
               {/* Thumbnail images - horizontal scrolling */}
-              {product.image_urls && product.image_urls.length > 1 && (
+              {variantImages.length > 1 && (
                 <div className="flex gap-2 mt-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                  {product.image_urls.map((img: string, idx: number) => (
+                  {variantImages.map((img: string, idx: number) => (
                     <button
                       key={idx}
                       onClick={() => setSelectedImage(idx)}
@@ -284,33 +298,111 @@ const ProductDetail: React.FC = () => {
               {/* Description - Shortened */}
               <p className="text-gray-600 mb-3 line-clamp-3">{product.description || 'No description available.'}</p>
 
-              {/* Variants */}
-              {product.variants && product.variants.length > 0 && (
+              {/* Product Size */}
+              {product.size && (
                 <div className="mb-3">
-                  <h3 className="font-medium mb-1 text-sm">Available Options</h3>
-                  <div className="flex flex-wrap gap-1">
-                    {product.variants.map((variant: any) => (
-                      <button
-                        key={variant.id}
-                        onClick={() => setSelectedVariant(variant)}
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          selectedVariant?.id === variant.id
-                            ? 'bg-krosh-lavender text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {variant.color} - {variant.weight}
-                      </button>
-                    ))}
+                  <h3 className="font-medium mb-1 text-sm">Size</h3>
+                  <div className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm">
+                    {product.size}
                   </div>
                 </div>
               )}
 
-              {/* Quantity management removed - now only managed through cart page */}
+              {/* Variants - Color Swatches */}
+              {product.variants && product.variants.length > 0 && (
+                <div className="mb-3">
+                  <h3 className="font-medium mb-1 text-sm">Colors</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.variants.map((variant: any) => {
+                      // Get color name for display
+                      const colorName = variant.name || variant.color || 'Default';
+
+                      // Try to determine if this is a color name we can convert to a CSS color
+                      const isStandardColor = [
+                        'red', 'blue', 'green', 'yellow', 'purple', 'pink',
+                        'orange', 'brown', 'black', 'white', 'gray', 'teal',
+                        'navy', 'maroon', 'olive', 'lime', 'aqua', 'silver'
+                      ].includes(variant.color?.toLowerCase());
+
+                      // Use the color name as the background if it's a standard color
+                      const bgColor = isStandardColor ? variant.color.toLowerCase() : null;
+
+                      return (
+                        <button
+                          key={variant.id}
+                          onClick={() => setSelectedVariant(variant)}
+                          className={`relative group`}
+                          title={colorName}
+                          disabled={variant.stock <= 0}
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center border-2
+                              ${selectedVariant?.id === variant.id ? 'border-krosh-lavender' : 'border-gray-200'}
+                              ${variant.stock <= 0 ? 'opacity-50' : ''}
+                            `}
+                          >
+                            {/* Color swatch */}
+                            {bgColor ? (
+                              <div
+                                className="w-6 h-6 rounded-full"
+                                style={{ backgroundColor: bgColor }}
+                              />
+                            ) : (
+                              // If no standard color, show the first letter of the color name
+                              <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
+                                <span className="text-xs font-medium">
+                                  {colorName.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Checkmark for selected variant */}
+                            {selectedVariant?.id === variant.id && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-krosh-lavender rounded-full flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-3 h-3">
+                                  <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Out of stock indicator */}
+                          {variant.stock <= 0 && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-8 h-0.5 bg-red-500 rotate-45 rounded-full"></div>
+                            </div>
+                          )}
+
+                          {/* Tooltip with color name */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                            {colorName}
+                            {variant.stock <= 0 ? ' (Out of stock)' : ''}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Stock information */}
               <div className="mb-3">
-                <p className="text-xs text-gray-500">
-                  {selectedVariant?.stock ? `${selectedVariant.stock} available (manage quantity in cart)` : 'Out of stock'}
-                </p>
+                {selectedVariant ? (
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${selectedVariant.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <p className="text-sm">
+                      {selectedVariant.stock > 0
+                        ? <span className="text-green-700">{selectedVariant.stock} in stock</span>
+                        : <span className="text-red-600">Out of stock</span>}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500">Please select a color</p>
+                )}
+
+                {selectedVariant?.sku && (
+                  <p className="text-xs text-gray-500 mt-1">SKU: {selectedVariant.sku}</p>
+                )}
               </div>
 
               {/* Add to Cart Button with smooth animation */}

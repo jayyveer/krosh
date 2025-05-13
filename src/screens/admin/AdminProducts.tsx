@@ -11,19 +11,34 @@ interface Product {
   price: number;
   original_price: number | null;
   category_id: string;
-  image_urls: string[] | null;
+  size: string | null;
+  default_variant_id: string | null;
   is_visible: boolean;
   created_at: string;
   category?: {
     name: string;
     slug: string;
   };
+  variants?: ProductVariant[];
 }
 
 interface Category {
   id: string;
   name: string;
   slug: string;
+}
+
+interface ProductVariant {
+  id: string;
+  product_id: string;
+  name: string;
+  color: string;
+  size: string;
+  weight: string;
+  stock: number;
+  is_sold_out: boolean;
+  image_urls: string[] | null;
+  created_at: string;
 }
 
 const AdminProducts: React.FC = () => {
@@ -41,6 +56,7 @@ const AdminProducts: React.FC = () => {
   const [price, setPrice] = useState('');
   const [originalPrice, setOriginalPrice] = useState('');
   const [categoryId, setCategoryId] = useState<string>('');
+  const [size, setSize] = useState('');
   const [isVisible, setIsVisible] = useState(true);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -83,7 +99,8 @@ const AdminProducts: React.FC = () => {
         .from('products')
         .select(`
           *,
-          category:categories(name, slug)
+          category:categories(name, slug),
+          variants:product_variants(*)
         `)
         .order('name');
 
@@ -105,7 +122,8 @@ const AdminProducts: React.FC = () => {
         .from('products')
         .select(`
           *,
-          category:categories(name, slug)
+          category:categories(name, slug),
+          variants:product_variants(*)
         `)
         .eq('category_id', categoryId)
         .order('name');
@@ -127,6 +145,7 @@ const AdminProducts: React.FC = () => {
     setDescription('');
     setPrice('');
     setOriginalPrice('');
+    setSize('');
     setCategoryId(categories.length > 0 ? categories[0].id : '');
     setIsVisible(true);
     setImageFiles([]);
@@ -141,11 +160,13 @@ const AdminProducts: React.FC = () => {
     setDescription(product.description || '');
     setPrice(product.price.toString());
     setOriginalPrice(product.original_price ? product.original_price.toString() : '');
+    setSize(product.size || '');
     setCategoryId(product.category_id);
     setIsVisible(product.is_visible);
     setImageFiles([]);
     setImagePreviews([]);
-    setExistingImages(product.image_urls || []);
+    // We no longer use image_urls from product
+    setExistingImages([]);
     setShowForm(true);
   };
 
@@ -241,8 +262,9 @@ const AdminProducts: React.FC = () => {
         price: parsedPrice,
         original_price: finalOriginalPrice,
         category_id: categoryId,
-        is_visible: isVisible,
-        image_urls: allImageUrls.length > 0 ? allImageUrls : null
+        size: size || null,
+        is_visible: isVisible
+        // image_urls is no longer stored at product level
       };
 
       if (editingProduct) {
@@ -430,6 +452,18 @@ const AdminProducts: React.FC = () => {
             </div>
 
             <div>
+              <label className="block text-sm font-medium mb-1">Size</label>
+              <input
+                type="text"
+                value={size}
+                onChange={(e) => setSize(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg"
+                placeholder="e.g., 4ply, 6ply, 8ply for yarn; S, M, L for clothing"
+              />
+              <p className="text-xs text-gray-500 mt-1">Size is managed at product level</p>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium mb-1">Category</label>
               <select
                 value={categoryId}
@@ -575,7 +609,9 @@ const AdminProducts: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variants</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visibility</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -584,9 +620,9 @@ const AdminProducts: React.FC = () => {
                   {products.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {product.image_urls && product.image_urls.length > 0 ? (
+                        {product.variants && product.variants.length > 0 && product.variants[0].image_urls && product.variants[0].image_urls.length > 0 ? (
                           <img
-                            src={product.image_urls[0]}
+                            src={product.variants[0].image_urls[0]}
                             alt={product.name}
                             className="w-10 h-10 rounded object-cover"
                           />
@@ -615,7 +651,17 @@ const AdminProducts: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {product.size || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {product.category?.name || 'Unknown'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="flex items-center">
+                          <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded">
+                            {product.variants?.length || 0} variants
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button

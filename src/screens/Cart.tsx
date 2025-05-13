@@ -68,8 +68,9 @@ const Cart: React.FC = () => {
   };
 
   const handleIncreaseQuantity = (item: any) => {
-    // Limit to maximum of 5 items
-    if (item.quantity < 5) {
+    // Limit to maximum of 5 items or available stock, whichever is lower
+    const maxAllowed = Math.min(5, item.variant.stock || 5);
+    if (item.quantity < maxAllowed) {
       updateQuantity(item.id, item.quantity + 1);
     }
   };
@@ -92,16 +93,27 @@ const Cart: React.FC = () => {
           {cartItems.map((item) => (
             <div key={item.id} className="bg-white rounded-lg shadow-sm p-4 flex items-center gap-4">
               <img
-                src={item.product.image_urls[0]}
+                src={item.variant.image_urls?.[0] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
                 alt={item.product.name}
                 className="w-20 h-20 object-cover rounded"
+                onError={(e) => {
+                  // If image fails to load, use placeholder
+                  (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg';
+                }}
               />
               <div className="flex-1">
                 <h3 className="font-medium">{item.product.name}</h3>
                 <p className="text-sm text-gray-500">
-                  {item.variant.color} - {item.variant.weight}
+                  {item.product.size && <span className="font-medium">Size: </span>}{item.product.size}
+                  {item.product.size && item.variant.color && <span> • </span>}
+                  {item.variant.color && <span><span className="font-medium">Color: </span>{item.variant.name || item.variant.color}</span>}
                 </p>
-                <p className="font-semibold">${Number(item.product.price).toFixed(2)}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold">${Number(item.product.price).toFixed(2)}</p>
+                  {item.product.original_price && Number(item.product.original_price) > Number(item.product.price) && (
+                    <p className="text-sm text-gray-500 line-through">${Number(item.product.original_price).toFixed(2)}</p>
+                  )}
+                </div>
               </div>
               <div className="flex flex-col items-end gap-2">
                 <button
@@ -121,11 +133,11 @@ const Cart: React.FC = () => {
                   <button
                     onClick={() => handleIncreaseQuantity(item)}
                     className={`px-3 py-1 rounded ${
-                      item.quantity >= 5
+                      item.quantity >= Math.min(5, item.variant.stock || 5)
                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         : 'bg-gray-100 hover:bg-gray-200 transition-colors'
                     }`}
-                    disabled={item.quantity >= 5}
+                    disabled={item.quantity >= Math.min(5, item.variant.stock || 5)}
                   >
                     +
                   </button>
