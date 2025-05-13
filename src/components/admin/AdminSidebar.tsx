@@ -1,13 +1,15 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingBag, 
-  Users, 
-  ClipboardList, 
-  Settings, 
-  LogOut 
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingBag,
+  Users,
+  ClipboardList,
+  Settings,
+  LogOut,
+  Menu,
+  X
 } from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { signOut } from '../../lib/auth';
@@ -16,42 +18,47 @@ import { signOut } from '../../lib/auth';
  * Sidebar component for the admin section
  * This is separate from the main sidebar to keep admin functionality isolated
  */
-const AdminSidebar: React.FC = () => {
+interface AdminSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
   const { user, adminRole } = useAuthContext();
   const navigate = useNavigate();
 
   const menuItems = [
-    { 
-      name: 'Dashboard', 
-      path: '/admin-access', 
-      icon: <LayoutDashboard size={20} /> 
+    {
+      name: 'Dashboard',
+      path: '/admin-access',
+      icon: <LayoutDashboard size={20} />
     },
-    { 
-      name: 'Products', 
-      path: '/admin-access/products', 
-      icon: <Package size={20} /> 
+    {
+      name: 'Products',
+      path: '/admin-access/products',
+      icon: <Package size={20} />
     },
-    { 
-      name: 'Categories', 
-      path: '/admin-access/categories', 
-      icon: <ShoppingBag size={20} /> 
+    {
+      name: 'Categories',
+      path: '/admin-access/categories',
+      icon: <ShoppingBag size={20} />
     },
-    { 
-      name: 'Users', 
-      path: '/admin-access/users', 
-      icon: <Users size={20} /> 
+    {
+      name: 'Users',
+      path: '/admin-access/users',
+      icon: <Users size={20} />
     },
-    { 
-      name: 'Orders', 
-      path: '/admin-access/orders', 
-      icon: <ClipboardList size={20} /> 
+    {
+      name: 'Orders',
+      path: '/admin-access/orders',
+      icon: <ClipboardList size={20} />
     },
     // Only show settings to superadmins
     ...(adminRole === 'superadmin' ? [
-      { 
-        name: 'Settings', 
-        path: '/admin-access/settings', 
-        icon: <Settings size={20} /> 
+      {
+        name: 'Settings',
+        path: '/admin-access/settings',
+        icon: <Settings size={20} />
       }
     ] : [])
   ];
@@ -66,7 +73,15 @@ const AdminSidebar: React.FC = () => {
   };
 
   return (
-    <div className="w-64 bg-white h-full shadow-md flex flex-col">
+    <div className={`fixed md:static top-0 left-0 z-40 w-64 bg-white h-full shadow-md flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      {/* Close button (mobile only) */}
+      <button
+        className="absolute top-4 right-4 p-1 rounded-full bg-gray-100 text-gray-600 md:hidden"
+        onClick={onClose}
+      >
+        <X size={20} />
+      </button>
+
       {/* Logo and Header */}
       <div className="p-6 border-b">
         <h1 className="text-xl font-bold bg-gradient-to-r from-krosh-pink via-krosh-lavender to-krosh-blue bg-clip-text text-transparent">

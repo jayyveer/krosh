@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuthContext } from '../../contexts/AuthContext';
 import AdminSidebar from './AdminSidebar';
+import { Menu } from 'lucide-react';
 
 /**
  * Layout component for the admin section
@@ -10,6 +11,7 @@ import AdminSidebar from './AdminSidebar';
 const AdminLayout: React.FC = () => {
   const { user, isAdmin, loading, checkAdminStatus, adminChecked } = useAuthContext();
   const [checkingAdmin, setCheckingAdmin] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Check admin status when component mounts
   useEffect(() => {
@@ -49,12 +51,38 @@ const AdminLayout: React.FC = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Admin Sidebar */}
-      <AdminSidebar />
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto p-8">
-        <Outlet />
-      </main>
+      <div className="flex-1 flex flex-col">
+        {/* Mobile Header */}
+        <header className="bg-white p-4 shadow-sm md:hidden">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-lg hover:bg-gray-100"
+            >
+              <Menu size={24} />
+            </button>
+            <h1 className="text-lg font-bold bg-gradient-to-r from-krosh-pink via-krosh-lavender to-krosh-blue bg-clip-text text-transparent">
+              Krosh Admin
+            </h1>
+            <div className="w-8"></div> {/* Empty div for balance */}
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-auto p-4 md:p-8">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };

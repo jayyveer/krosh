@@ -19,6 +19,7 @@ import AdminCategories from './screens/admin/AdminCategories';
 import AdminUsers from './screens/admin/AdminUsers';
 import AdminOrders from './screens/admin/AdminOrders';
 import AdminSettings from './screens/admin/AdminSettings';
+import AdminProductVariants from './screens/admin/AdminProductVariants';
 import NotFound from './screens/NotFound';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/admin-access" element={<AdminLayout />}>
                   <Route index element={<AdminDashboard />} />
                   <Route path="products" element={<AdminProducts />} />
+                  <Route path="products/:productId/variants" element={<AdminProductVariants />} />
                   <Route path="categories" element={<AdminCategories />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="orders" element={<AdminOrders />} />

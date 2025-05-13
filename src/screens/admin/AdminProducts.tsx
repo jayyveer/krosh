@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Image, Package, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Image, Package, Eye, EyeOff, Layers } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { uploadImage, deleteImage } from '../../lib/imageUpload';
 
@@ -8,6 +9,7 @@ interface Product {
   name: string;
   description: string | null;
   price: number;
+  original_price: number | null;
   category_id: string;
   image_urls: string[] | null;
   is_visible: boolean;
@@ -37,6 +39,7 @@ const AdminProducts: React.FC = () => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [originalPrice, setOriginalPrice] = useState('');
   const [categoryId, setCategoryId] = useState<string>('');
   const [isVisible, setIsVisible] = useState(true);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -123,6 +126,7 @@ const AdminProducts: React.FC = () => {
     setName('');
     setDescription('');
     setPrice('');
+    setOriginalPrice('');
     setCategoryId(categories.length > 0 ? categories[0].id : '');
     setIsVisible(true);
     setImageFiles([]);
@@ -136,6 +140,7 @@ const AdminProducts: React.FC = () => {
     setName(product.name);
     setDescription(product.description || '');
     setPrice(product.price.toString());
+    setOriginalPrice(product.original_price ? product.original_price.toString() : '');
     setCategoryId(product.category_id);
     setIsVisible(product.is_visible);
     setImageFiles([]);
@@ -220,10 +225,21 @@ const AdminProducts: React.FC = () => {
       // Combine existing and new images
       const allImageUrls = [...existingImages, ...uploadedImageUrls];
 
+      // Calculate original price (if provided and greater than price)
+      const parsedPrice = parseFloat(price);
+      const parsedOriginalPrice = originalPrice ? parseFloat(originalPrice) : null;
+
+      // Only use original price if it's greater than the regular price
+      const finalOriginalPrice =
+        parsedOriginalPrice && parsedOriginalPrice > parsedPrice
+          ? parsedOriginalPrice
+          : null;
+
       const productData = {
         name,
         description: description || null,
-        price: parseFloat(price),
+        price: parsedPrice,
+        original_price: finalOriginalPrice,
         category_id: categoryId,
         is_visible: isVisible,
         image_urls: allImageUrls.length > 0 ? allImageUrls : null
@@ -384,7 +400,7 @@ const AdminProducts: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Price</label>
+                <label className="block text-sm font-medium mb-1">Sale Price</label>
                 <input
                   type="number"
                   value={price}
@@ -395,24 +411,39 @@ const AdminProducts: React.FC = () => {
                   min="0"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Current selling price</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Category</label>
-                <select
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
+                <label className="block text-sm font-medium mb-1">Original Price</label>
+                <input
+                  type="number"
+                  value={originalPrice}
+                  onChange={(e) => setOriginalPrice(e.target.value)}
                   className="w-full px-3 py-2 border rounded-lg"
-                  required
-                >
-                  <option value="" disabled>Select a category</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave empty if not on sale</p>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Category</label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg"
+                required
+              >
+                <option value="" disabled>Select a category</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -574,7 +605,14 @@ const AdminProducts: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        ${product.price.toFixed(2)}
+                        <div className="flex flex-col">
+                          <span className="font-medium">${product.price.toFixed(2)}</span>
+                          {product.original_price && (
+                            <span className="text-xs text-gray-500 line-through">
+                              ${product.original_price.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {product.category?.name || 'Unknown'}
@@ -603,15 +641,24 @@ const AdminProducts: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div className="flex gap-2">
+                          <Link
+                            to={`/admin-access/products/${product.id}/variants`}
+                            className="p-1 text-green-600 hover:bg-green-50 rounded"
+                            title="Manage Variants"
+                          >
+                            <Layers size={16} />
+                          </Link>
                           <button
                             onClick={() => handleEditProduct(product)}
                             className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                            title="Edit Product"
                           >
                             <Pencil size={16} />
                           </button>
                           <button
                             onClick={() => handleDeleteProduct(product.id)}
                             className="p-1 text-red-600 hover:bg-red-50 rounded"
+                            title="Delete Product"
                           >
                             <Trash2 size={16} />
                           </button>
