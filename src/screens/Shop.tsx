@@ -5,13 +5,13 @@ import ProductCard from '../components/ui/ProductCard';
 import ProductCardSkeleton from '../components/ui/ProductCardSkeleton';
 import FilterButton from '../components/ui/FilterButton';
 import SectionHeader from '../components/ui/SectionHeader';
-import { getProducts, getAllProducts } from '../lib/api';
+import { getProducts } from '../lib/api';
 import { staggerContainerVariants, staggerItemVariants } from '../lib/animations';
 import { useLocation, useSearchParams } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 const Shop: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
-  const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,31 +21,79 @@ const Shop: React.FC = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
+  const [categories, setCategories] = useState<string[]>(['All']);
+  // Map to store category slug to name mapping for quick lookup
+  const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
 
-  // Get category from URL params or location state
+  // Single effect to handle initial loading with optimized API calls
   useEffect(() => {
     const categorySlug = searchParams.get('category');
     const categoryName = location.state?.categoryName;
 
-    if (categorySlug && allProducts.length > 0) {
-      // Find the category name from the slug
-      const category = allProducts.find(p => p.category?.slug === categorySlug)?.category?.name;
-      if (category) {
-        setActiveCategory(category);
-      } else if (categoryName) {
-        setActiveCategory(categoryName);
-      }
-    } else if (categoryName) {
-      setActiveCategory(categoryName);
-    }
-  }, [searchParams, allProducts, location.state]);
+    // First, load categories data (this is a lightweight call)
+    const loadCategoriesData = async () => {
+      try {
+        // Get categories data from Supabase directly instead of loading all products
+        const { data: categoriesData } = await supabase
+          .from('categories')
+          .select('id, name, slug')
+          .order('name', { ascending: false });
 
-  // Load initial products
-  useEffect(() => {
-    loadProducts();
-    // Also load all products for category filtering
-    loadAllProducts();
-  }, []);
+        if (categoriesData) {
+          // Create a map of categories for quick lookup
+          const newCategoryMap = categoriesData.reduce((acc, cat) => {
+            acc[cat.slug] = cat.name;
+            // Also store reverse mapping for name to slug
+            acc[cat.name] = cat.slug;
+            return acc;
+          }, {});
+
+          // Store the category map in state for later use
+          setCategoryMap(newCategoryMap);
+
+          // Set categories for filter buttons
+          const categoryNames = ['All', ...categoriesData.map(c => c.name)];
+          setCategories(categoryNames);
+
+          // Handle category from URL or state
+          if (categorySlug) {
+            console.log('Loading products with category slug from URL:', categorySlug);
+
+            // Set active category from slug
+            if (newCategoryMap[categorySlug]) {
+              setActiveCategory(newCategoryMap[categorySlug]);
+            } else if (categoryName) {
+              setActiveCategory(categoryName);
+            }
+
+            // Load products with this category slug directly
+            // No need to load all products first
+            loadProductsByCategory(1, categorySlug);
+          } else if (categoryName) {
+            setActiveCategory(categoryName);
+
+            // Find the slug from the category name
+            const slug = categoriesData.find(c => c.name === categoryName)?.slug;
+            if (slug) {
+              loadProductsByCategory(1, slug);
+            } else {
+              // If no matching category, load all products
+              loadProductsByCategory(1);
+            }
+          } else {
+            // No category selected, load all products
+            loadProductsByCategory(1);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading categories:', err);
+        // Fallback to loading all products
+        loadProductsByCategory(1);
+      }
+    };
+
+    loadCategoriesData();
+  }, [searchParams, location.state]);
 
   // Function to load products with the current active category
   async function loadProducts(pageNum = 1) {
@@ -115,25 +163,20 @@ const Shop: React.FC = () => {
     }
   }
 
-  async function loadAllProducts() {
-    try {
-      const data = await getAllProducts();
-      setAllProducts(data);
-    } catch (err) {
-      console.error('Failed to load all products for filtering:', err);
-    }
-  }
-
   const loadMoreProducts = () => {
     if (!hasMore || loadingMore) return;
-    loadProducts(page + 1);
+
+    // Get current category slug from the categoryMap
+    const categorySlug = activeCategory !== 'All'
+      ? categoryMap[activeCategory]
+      : undefined;
+
+    // Use the category-specific loading function
+    loadProductsByCategory(page + 1, categorySlug);
   };
 
   // No need to filter products client-side anymore since we're filtering at the API level
   const filteredProducts = products;
-
-  // Use allProducts for category list to ensure all categories are shown
-  const categories = ['All', ...new Set(allProducts.map(p => p.category?.name))];
 
   // Create title based on active category
   const title = activeCategory === 'All' ? 'Shop' : activeCategory;
@@ -155,18 +198,21 @@ const Shop: React.FC = () => {
                 label={category}
                 active={activeCategory === category}
                 onClick={() => {
-                  // Get the category slug first
+                  // Get the category slug from our map
                   let categorySlug: string | undefined;
 
                   if (category === 'All') {
                     categorySlug = undefined;
                     setSearchParams({});
                   } else {
-                    categorySlug = allProducts.find(p => p.category?.name === category)?.category?.slug;
+                    // Use the categoryMap to get the slug directly
+                    categorySlug = categoryMap[category];
                     if (categorySlug) {
                       setSearchParams({ category: categorySlug });
                     }
                   }
+
+                  console.log(`Selecting category: ${category}, slug: ${categorySlug}`);
 
                   // Reset products and update state
                   setProducts([]);
@@ -243,7 +289,7 @@ const Shop: React.FC = () => {
         {/* Products Count */}
         {!loading && filteredProducts.length > 0 && (
           <div className="text-center text-gray-500 text-sm mt-6">
-            Showing {filteredProducts.length} of {activeCategory === 'All' ? totalCount : allProducts.filter(p => p.category?.name === activeCategory).length} products
+            Showing {filteredProducts.length} of {totalCount} products
           </div>
         )}
       </div>
