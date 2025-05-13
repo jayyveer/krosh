@@ -82,6 +82,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             src={product.image_urls?.[0] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
             alt={product.name}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              // If image fails to load, use placeholder
+              (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg';
+            }}
           />
 
           {/* Category overlay - bottom left */}

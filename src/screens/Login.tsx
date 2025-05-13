@@ -32,15 +32,21 @@ const Login: React.FC = () => {
     try {
       await signIn(email, password);
       // Redirect will happen automatically due to the useEffect
-    } catch (err) {
-      setError('Invalid email or password');
+    } catch (err: any) {
+      if (err.message === 'ACCOUNT_DISABLED') {
+        setError(
+          'Your account has been disabled. Please contact kroshenquiry@gmail.com for assistance.'
+        );
+      } else {
+        setError('Invalid email or password');
+      }
       setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-krosh-background p-4">
-      <motion.div 
+      <motion.div
         className="w-full max-w-md"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -52,7 +58,7 @@ const Login: React.FC = () => {
           </h1>
           <p className="text-gray-600 mt-2">Sign in to your account</p>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm p-6">
           <form onSubmit={handleLogin} className="space-y-4">
             {error && (
@@ -80,7 +86,7 @@ const Login: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
@@ -100,7 +106,7 @@ const Login: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             <div className="pt-2">
               <motion.button
                 type="submit"
@@ -113,10 +119,10 @@ const Login: React.FC = () => {
             </div>
           </form>
         </div>
-        
+
         <div className="mt-6 text-center">
-          <button 
-            onClick={() => navigate('/')} 
+          <button
+            onClick={() => navigate('/')}
             className="text-sm text-gray-600 hover:text-krosh-lavender transition-colors"
           >
             Back to Home

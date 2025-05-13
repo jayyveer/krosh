@@ -215,6 +215,10 @@ const ProductDetail: React.FC = () => {
                   src={product.image_urls?.[selectedImage] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
                   alt={product.name}
                   className="w-full h-56 md:h-64 object-contain rounded-lg"
+                  onError={(e) => {
+                    // If image fails to load, use placeholder
+                    (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg';
+                  }}
                 />
 
                 {/* Discount badge */}
@@ -237,7 +241,15 @@ const ProductDetail: React.FC = () => {
                         selectedImage === idx ? 'border-krosh-lavender' : 'border-transparent'
                       }`}
                     >
-                      <img src={img} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-cover" />
+                      <img
+                        src={img}
+                        alt={`${product.name} ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // If image fails to load, use placeholder
+                          (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg';
+                        }}
+                      />
                     </button>
                   ))}
                 </div>

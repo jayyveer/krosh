@@ -43,6 +43,9 @@ const AdminCategories: React.FC = () => {
 
       if (error) throw error;
 
+      // Log the data for debugging
+      console.log('Fetched categories:', data);
+
       setCategories(data || []);
     } catch (err) {
       console.error('Error fetching categories:', err);
@@ -72,6 +75,9 @@ const AdminCategories: React.FC = () => {
     setImagePreview(category.image_url);
     setImageFile(null);
     setShowForm(true);
+
+    // Log the category data for debugging
+    console.log('Editing category:', category);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,33 +140,38 @@ const AdminCategories: React.FC = () => {
         }
       }
 
+      // Prepare the category data
+      const categoryData = {
+        name,
+        slug,
+        description: description || null, // Ensure empty string is saved as null
+        parent_id: parentId,
+        image_url: imageUrl
+      };
+
+      console.log('Saving category data:', categoryData);
+
       if (editingCategory) {
         // Update existing category
         const { error: updateError } = await supabase
           .from('categories')
-          .update({
-            name,
-            slug,
-            description,
-            parent_id: parentId,
-            image_url: imageUrl
-          })
+          .update(categoryData)
           .eq('id', editingCategory.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating category:', updateError);
+          throw updateError;
+        }
       } else {
         // Create new category
         const { error: insertError } = await supabase
           .from('categories')
-          .insert({
-            name,
-            slug,
-            description,
-            parent_id: parentId,
-            image_url: imageUrl
-          });
+          .insert(categoryData);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Error inserting category:', insertError);
+          throw insertError;
+        }
       }
 
       // Refresh categories

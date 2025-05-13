@@ -34,12 +34,32 @@ export async function signUp(email: string, password: string, name: string) {
 }
 
 export async function signIn(email: string, password: string) {
+  // First, sign in with Supabase Auth
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error) throw error;
+
+  // Check if the user is disabled
+  if (data.user) {
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('disabled')
+      .eq('id', data.user.id)
+      .single();
+
+    if (userError) {
+      // If there's an error checking disabled status, proceed with caution
+      console.error('Error checking user disabled status:', userError);
+    } else if (userData?.disabled) {
+      // If the user is disabled, sign them out and throw an error
+      await supabase.auth.signOut();
+      throw new Error('ACCOUNT_DISABLED');
+    }
+  }
+
   return data;
 }
 
@@ -47,6 +67,38 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }
+
+// Helper functions to manage admin status in localStorage
+const getStoredAdminStatus = (userId: string | undefined) => {
+  if (!userId) return null;
+
+  try {
+    const storedData = localStorage.getItem(`admin_status_${userId}`);
+    if (storedData) {
+      const parsedData = JSON.parse(storedData);
+      // Check if the data is still valid (less than 1 hour old)
+      if (parsedData.timestamp && Date.now() - parsedData.timestamp < 3600000) {
+        return parsedData;
+      }
+    }
+  } catch (err) {
+    console.error('Error reading admin status from localStorage:', err);
+  }
+
+  return null;
+};
+
+const storeAdminStatus = (userId: string, isAdmin: boolean, adminRole: string | null) => {
+  try {
+    localStorage.setItem(`admin_status_${userId}`, JSON.stringify({
+      isAdmin,
+      adminRole,
+      timestamp: Date.now()
+    }));
+  } catch (err) {
+    console.error('Error storing admin status in localStorage:', err);
+  }
+};
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -58,21 +110,50 @@ export function useAuth() {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      // Try to get admin status from localStorage
+      if (currentUser) {
+        const storedStatus = getStoredAdminStatus(currentUser.id);
+        if (storedStatus) {
+          setIsAdmin(storedStatus.isAdmin);
+          setAdminRole(storedStatus.adminRole);
+          setAdminChecked(true);
+        }
+      }
+
       setLoading(false);
-      // Don't check admin status here - we'll do it on demand
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      // If user changed, try to get admin status from localStorage
+      if (currentUser) {
+        const storedStatus = getStoredAdminStatus(currentUser.id);
+        if (storedStatus) {
+          setIsAdmin(storedStatus.isAdmin);
+          setAdminRole(storedStatus.adminRole);
+          setAdminChecked(true);
+        } else {
+          // Reset admin status when auth changes and no stored status
+          setIsAdmin(false);
+          setAdminRole(null);
+          setAdminChecked(false);
+        }
+      } else {
+        // Reset admin status when user logs out
+        setIsAdmin(false);
+        setAdminRole(null);
+        setAdminChecked(false);
+      }
+
       setLoading(false);
-      // Reset admin status when auth changes
-      setIsAdmin(false);
-      setAdminRole(null);
-      setAdminChecked(false);
     });
 
     return () => subscription.unsubscribe();
@@ -105,6 +186,9 @@ export function useAuth() {
             setIsAdmin(true);
             setAdminRole(data.role as 'superadmin' | 'editor');
             setAdminChecked(true);
+
+            // Store admin status in localStorage
+            storeAdminStatus(userId, true, data.role);
             return;
           }
         }
@@ -123,6 +207,9 @@ export function useAuth() {
         setIsAdmin(false);
         setAdminRole(null);
         setAdminChecked(true);
+
+        // Store admin status in localStorage
+        storeAdminStatus(userId, false, null);
         return;
       }
 
@@ -132,12 +219,21 @@ export function useAuth() {
       // Set the admin role if the user is an admin
       if (isUserAdmin && data?.role) {
         setAdminRole(data.role as 'superadmin' | 'editor');
+
+        // Store admin status in localStorage
+        storeAdminStatus(userId, true, data.role);
       } else {
         setAdminRole(null);
+
+        // Store admin status in localStorage
+        storeAdminStatus(userId, false, null);
       }
     } catch (err) {
       setIsAdmin(false);
       setAdminRole(null);
+
+      // Store admin status in localStorage
+      storeAdminStatus(userId, false, null);
     } finally {
       setAdminChecked(true);
     }
