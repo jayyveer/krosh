@@ -65,7 +65,7 @@ const ProductDetail: React.FC = () => {
         .select(`
           *,
           category:categories(name, slug),
-          variants:product_variants(*)
+          variants:product_variants!product_variants_product_id_fkey(*)
         `)
         .eq('id', productId)
         .single();
@@ -81,7 +81,7 @@ const ProductDetail: React.FC = () => {
           .select(`
             *,
             category:categories(name, slug),
-            variants:product_variants(*)
+            variants:product_variants!product_variants_product_id_fkey(*)
           `)
           .eq('category_id', data.category.id)
           .neq('id', productId)

@@ -100,7 +100,7 @@ const AdminProducts: React.FC = () => {
         .select(`
           *,
           category:categories(name, slug),
-          variants:product_variants(*)
+          variants:product_variants!product_variants_product_id_fkey(*)
         `)
         .order('name');
 
@@ -123,7 +123,7 @@ const AdminProducts: React.FC = () => {
         .select(`
           *,
           category:categories(name, slug),
-          variants:product_variants(*)
+          variants:product_variants!product_variants_product_id_fkey(*)
         `)
         .eq('category_id', categoryId)
         .order('name');

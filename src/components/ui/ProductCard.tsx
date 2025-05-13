@@ -15,7 +15,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { user } = useAuthContext();
   const { showToast } = useToast();
   const { addToCart, removeFromCart, cartItems } = useCart();
-  const defaultVariant = product.variants?.[0];
+  const defaultVariant = product.variants?.find((v: any) => v.id === product.default_variant_id) || product.variants?.[0];
   const inStock = defaultVariant?.stock > 0;
 
   // Check if product is already in cart
@@ -79,7 +79,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Image container with overlays */}
         <div className="relative h-40 overflow-hidden">
           <img
-            src={product.image_urls?.[0] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
+            src={defaultVariant?.image_urls?.[0] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
             alt={product.name}
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -116,16 +116,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               )}
             </div>
 
-            {defaultVariant && (
-              <div className="flex flex-wrap gap-1 mb-2">
+            <div className="flex flex-wrap gap-1 mb-2">
+              {product.size && (
+                <span className="text-xs bg-krosh-blue/20 px-2 py-0.5 rounded-full">
+                  {product.size}
+                </span>
+              )}
+              {defaultVariant?.color && (
                 <span className="text-xs bg-krosh-lavender/20 px-2 py-0.5 rounded-full">
-                  {defaultVariant.color}
+                  {defaultVariant.name || defaultVariant.color}
                 </span>
-                <span className="text-xs bg-krosh-pink/20 px-2 py-0.5 rounded-full">
-                  {defaultVariant.weight}
-                </span>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Add/Remove cart button with animation */}
