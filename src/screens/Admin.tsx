@@ -23,7 +23,7 @@ const AdminCard: React.FC<{ title: string; count: number; icon: React.ReactNode 
 );
 
 const Admin: React.FC = () => {
-  const { user, isAdmin, loading: authLoading } = useAuthContext();
+  const { user, isAdmin, adminRole, loading: authLoading } = useAuthContext();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,9 +84,16 @@ const Admin: React.FC = () => {
               <Settings size={16} />
               {showDebug ? 'Hide Debug' : 'Debug'}
             </button>
-            <span className="px-3 py-1 bg-krosh-pink/20 rounded-full text-sm">
-              {user.email}
-            </span>
+            <div className="flex flex-col items-end">
+              <span className="px-3 py-1 bg-krosh-pink/20 rounded-full text-sm">
+                {user.email}
+              </span>
+              {adminRole && (
+                <span className="mt-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
+                  Role: {adminRole}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

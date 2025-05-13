@@ -201,35 +201,21 @@ export async function makeUserAdmin(userId: string, role: 'superadmin' | 'editor
   if (userError) throw userError;
   if (!userData) throw new Error('User not found');
 
-  // Check if the user is already an admin
-  const { data: existingAdmin } = await supabase
-    .from('admins')
-    .select('id')
-    .eq('id', userId)
-    .single();
+  // Use the make_user_admin function
+  const { data, error } = await supabase
+    .rpc('make_user_admin', {
+      user_id: userId,
+      user_email: userData.email,
+      admin_role: role
+    });
 
-  if (existingAdmin) {
-    // User is already an admin, update their role
-    const { error } = await supabase
-      .from('admins')
-      .update({ role })
-      .eq('id', userId);
+  if (error) throw error;
 
-    if (error) throw error;
-    return { message: 'Admin role updated successfully' };
-  } else {
-    // Add the user to the admins table
-    const { error } = await supabase
-      .from('admins')
-      .insert({
-        id: userId,
-        email: userData.email,
-        role
-      });
-
-    if (error) throw error;
-    return { message: 'User made admin successfully' };
+  if (!data.success) {
+    throw new Error(data.message);
   }
+
+  return { message: data.message };
 }
 
 /**

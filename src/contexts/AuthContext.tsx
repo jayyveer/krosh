@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  adminRole: 'superadmin' | 'editor' | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

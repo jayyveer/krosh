@@ -52,6 +52,7 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminRole, setAdminRole] = useState<'superadmin' | 'editor' | null>(null);
 
   useEffect(() => {
     // Get initial session
@@ -76,6 +77,7 @@ export function useAuth() {
   const checkAdminStatus = async (userId: string | undefined) => {
     if (!userId) {
       setIsAdmin(false);
+      setAdminRole(null);
       return;
     }
 
@@ -89,16 +91,31 @@ export function useAuth() {
       if (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
+        setAdminRole(null);
         return;
       }
 
-      setIsAdmin(!!data);
-      console.log('Admin check result:', { userId, isAdmin: !!data, data });
+      const isUserAdmin = !!data;
+      setIsAdmin(isUserAdmin);
+
+      // Set the admin role if the user is an admin
+      if (isUserAdmin && data.role) {
+        setAdminRole(data.role as 'superadmin' | 'editor');
+      } else {
+        setAdminRole(null);
+      }
+
+      console.log('Admin check result:', {
+        userId,
+        isAdmin: isUserAdmin,
+        role: isUserAdmin ? data.role : null
+      });
     } catch (err) {
       console.error('Exception in checkAdminStatus:', err);
       setIsAdmin(false);
+      setAdminRole(null);
     }
   };
 
-  return { user, loading, isAdmin };
+  return { user, loading, isAdmin, adminRole };
 }
