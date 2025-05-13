@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuthContext } from '../../contexts/AuthContext';
 import AdminSidebar from './AdminSidebar';
@@ -8,10 +8,24 @@ import AdminSidebar from './AdminSidebar';
  * This is separate from the main layout to keep admin functionality isolated
  */
 const AdminLayout: React.FC = () => {
-  const { user, isAdmin, loading } = useAuthContext();
+  const { user, isAdmin, loading, checkAdminStatus, adminChecked } = useAuthContext();
+  const [checkingAdmin, setCheckingAdmin] = useState(false);
 
-  // Show loading state while checking authentication
-  if (loading) {
+  // Check admin status when component mounts
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user && !adminChecked) {
+        setCheckingAdmin(true);
+        await checkAdminStatus();
+        setCheckingAdmin(false);
+      }
+    };
+
+    checkAdmin();
+  }, [user, adminChecked, checkAdminStatus]);
+
+  // Show loading state while checking authentication or admin status
+  if (loading || checkingAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
@@ -28,7 +42,7 @@ const AdminLayout: React.FC = () => {
   }
 
   // Redirect to home if not an admin
-  if (!isAdmin) {
+  if (adminChecked && !isAdmin) {
     return <Navigate to="/" replace />;
   }
 

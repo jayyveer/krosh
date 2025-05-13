@@ -7,6 +7,8 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   adminRole: 'superadmin' | 'editor' | null;
+  checkAdminStatus: () => Promise<void>; // Function to check admin status on demand
+  adminChecked: boolean; // Flag to indicate if admin status has been checked
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,14 +28,5 @@ export function useAuthContext() {
   if (context === undefined) {
     throw new Error('useAuthContext must be used within an AuthProvider');
   }
-
-  // Debug the context values
-  console.log('useAuthContext - Current values:', {
-    user: !!context.user,
-    isAdmin: context.isAdmin,
-    adminRole: context.adminRole,
-    loading: context.loading
-  });
-
   return context;
 }

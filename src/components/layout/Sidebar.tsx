@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, ShoppingBag, Search, Info, Package, ShoppingCart, X, LogOut, Grid3X3, Settings } from 'lucide-react';
@@ -12,9 +12,37 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
-  const { user, isAdmin } = useAuthContext();
+  const { user, isAdmin, adminChecked, checkAdminStatus } = useAuthContext();
+  const [showAdminLink, setShowAdminLink] = useState(false);
+  const [adminLinkChecked, setAdminLinkChecked] = useState(false);
 
-  const menuItems = [
+  // Check admin status when the user hovers over the sidebar
+  // This is a simple way to lazy-load the admin status without affecting performance
+  useEffect(() => {
+    const handleMouseEnter = async () => {
+      if (user && !adminChecked) {
+        await checkAdminStatus();
+      }
+    };
+
+    const sidebarElement = document.getElementById('main-sidebar');
+    if (sidebarElement) {
+      sidebarElement.addEventListener('mouseenter', handleMouseEnter);
+      return () => {
+        sidebarElement.removeEventListener('mouseenter', handleMouseEnter);
+      };
+    }
+  }, [user, adminChecked, checkAdminStatus]);
+
+  // Update showAdminLink when isAdmin or adminChecked changes
+  useEffect(() => {
+    if (adminChecked) {
+      setShowAdminLink(isAdmin);
+      setAdminLinkChecked(true);
+    }
+  }, [isAdmin, adminChecked]);
+
+  const baseMenuItems = [
     { name: 'Home', path: '/', icon: <Home size={20} /> },
     { name: 'Shop', path: '/shop', icon: <ShoppingBag size={20} /> },
     { name: 'Search', path: '/search', icon: <Search size={20} /> },
@@ -22,8 +50,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
     { name: 'Orders', path: '/orders', icon: <Package size={20} /> },
     { name: 'Cart', path: '/cart', icon: <ShoppingCart size={20} /> },
     { name: 'About', path: '/about', icon: <Info size={20} /> },
-    // Only show admin link to admin users
-    ...(isAdmin ? [{ name: 'Admin', path: '/admin-access', icon: <Settings size={20} /> }] : []),
+  ];
+
+  // Only add admin link if we've checked and the user is an admin
+  const menuItems = [
+    ...baseMenuItems,
+    ...(showAdminLink ? [{ name: 'Admin', path: '/admin-access', icon: <Settings size={20} /> }] : []),
   ];
 
   const handleLogout = async () => {
@@ -46,6 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
       )}
 
       <motion.div
+        id="main-sidebar"
         className={`fixed top-0 left-0 h-full w-64 bg-white z-50 shadow-lg pt-16
                    md:pt-16 md:sticky md:shadow-none flex flex-col
                    ${isOpen ? 'block' : 'hidden md:block'}`}

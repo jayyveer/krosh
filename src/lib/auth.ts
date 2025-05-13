@@ -53,13 +53,14 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminRole, setAdminRole] = useState<'superadmin' | 'editor' | null>(null);
+  const [adminChecked, setAdminChecked] = useState(false);
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      checkAdminStatus(session?.user?.id);
       setLoading(false);
+      // Don't check admin status here - we'll do it on demand
     });
 
     // Listen for auth changes
@@ -67,19 +68,23 @@ export function useAuth() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      checkAdminStatus(session?.user?.id);
       setLoading(false);
+      // Reset admin status when auth changes
+      setIsAdmin(false);
+      setAdminRole(null);
+      setAdminChecked(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkAdminStatus = async (userId: string | undefined) => {
-    if (!userId) {
-      setIsAdmin(false);
-      setAdminRole(null);
+  const checkAdminStatus = async () => {
+    // If already checked or no user, don't check again
+    if (adminChecked || !user) {
       return;
     }
+
+    const userId = user.id;
 
     try {
       // First, try using the is_user_admin function
@@ -99,16 +104,11 @@ export function useAuth() {
           if (!error && data && data.role) {
             setIsAdmin(true);
             setAdminRole(data.role as 'superadmin' | 'editor');
-            console.log('Admin check result (via RPC):', {
-              userId,
-              isAdmin: true,
-              role: data.role
-            });
+            setAdminChecked(true);
             return;
           }
         }
       } catch (rpcErr) {
-        console.error('Error using is_user_admin RPC:', rpcErr);
         // Continue with the fallback method
       }
 
@@ -119,10 +119,10 @@ export function useAuth() {
         .eq('id', userId)
         .single();
 
-      if (error) {
-        console.error('Error checking admin status:', error);
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
         setIsAdmin(false);
         setAdminRole(null);
+        setAdminChecked(true);
         return;
       }
 
@@ -130,31 +130,18 @@ export function useAuth() {
       setIsAdmin(isUserAdmin);
 
       // Set the admin role if the user is an admin
-      if (isUserAdmin && data.role) {
+      if (isUserAdmin && data?.role) {
         setAdminRole(data.role as 'superadmin' | 'editor');
       } else {
         setAdminRole(null);
       }
-
-      console.log('Admin check result (via direct query):', {
-        userId,
-        isAdmin: isUserAdmin,
-        role: isUserAdmin ? data.role : null
-      });
     } catch (err) {
-      console.error('Exception in checkAdminStatus:', err);
       setIsAdmin(false);
       setAdminRole(null);
+    } finally {
+      setAdminChecked(true);
     }
   };
 
-  // Debug the current state before returning
-  console.log('useAuth - Current state:', {
-    user: !!user,
-    isAdmin,
-    adminRole,
-    loading
-  });
-
-  return { user, loading, isAdmin, adminRole };
+  return { user, loading, isAdmin, adminRole, checkAdminStatus, adminChecked };
 }
