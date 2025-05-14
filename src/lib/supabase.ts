@@ -84,8 +84,10 @@ export type Database = {
           name: string
           description: string
           category_id: string
-          image_urls: string[]
           price: number
+          original_price: number | null
+          size: string | null
+          default_variant_id: string | null
           is_visible: boolean
           created_at: string
         }
@@ -94,8 +96,10 @@ export type Database = {
           name: string
           description: string
           category_id: string
-          image_urls?: string[]
           price: number
+          original_price?: number | null
+          size?: string | null
+          default_variant_id?: string | null
           is_visible?: boolean
           created_at?: string
         }
@@ -104,8 +108,10 @@ export type Database = {
           name?: string
           description?: string
           category_id?: string
-          image_urls?: string[]
           price?: number
+          original_price?: number | null
+          size?: string | null
+          default_variant_id?: string | null
           is_visible?: boolean
           created_at?: string
         }
@@ -114,31 +120,31 @@ export type Database = {
         Row: {
           id: string
           product_id: string
+          name: string | null
           color: string
-          weight: string
-          size: string
           stock: number
           is_sold_out: boolean
+          image_urls: string[] | null
           created_at: string
         }
         Insert: {
           id?: string
           product_id: string
+          name?: string | null
           color: string
-          weight: string
-          size: string
           stock?: number
           is_sold_out?: boolean
+          image_urls?: string[] | null
           created_at?: string
         }
         Update: {
           id?: string
           product_id?: string
+          name?: string | null
           color?: string
-          weight?: string
-          size?: string
           stock?: number
           is_sold_out?: boolean
+          image_urls?: string[] | null
           created_at?: string
         }
       }
