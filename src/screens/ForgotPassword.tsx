@@ -31,16 +31,31 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-krosh-background p-4">
+    <div className="min-h-screen flex items-center justify-center relative">
+      {/* Background Image with Gradient Overlay */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/images/background.jpg"
+          alt="Background"
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            console.error('Background image failed to load');
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+        {/* Gradient overlay that's more elegant */}
+        <div className="absolute inset-0 bg-gradient-to-br from-krosh-lavender/70 via-black/50 to-krosh-pink/60"></div>
+      </div>
+
       <motion.div
-        className="w-full max-w-md"
+        className="w-full max-w-md z-10 px-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.4 }}
       >
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-lg overflow-hidden border-2 border-krosh-lavender/30 shadow-sm">
+          <div className="flex justify-center mb-6">
+            <div className="h-28 w-28 rounded-xl overflow-hidden border-2 border-white/30 shadow-xl">
               <img
                 src="/images/yarn-by-krosh.jpeg"
                 alt="Yarn by Krosh Logo"
@@ -52,25 +67,25 @@ const ForgotPassword: React.FC = () => {
               />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-krosh-text">
+          <h1 className="text-4xl font-bold text-white mb-2">
             Reset Password
           </h1>
-          <p className="text-gray-600 mt-2">We'll send you a link to reset your password</p>
+          <p className="text-white/90 text-lg">We'll send you a link to reset your password</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-white/85 backdrop-blur-md rounded-xl shadow-xl p-6 border border-white/30 bg-gradient-to-br from-white/95 to-white/75">
           {success ? (
             <div className="text-center py-4">
               <div className="mb-4 text-green-600 bg-green-50 p-4 rounded-lg">
                 <p className="font-medium">Reset link sent!</p>
                 <p className="text-sm mt-1">
-                  We've sent a password reset link to <strong>{email}</strong>. 
+                  We've sent a password reset link to <strong>{email}</strong>.
                   Please check your email and follow the instructions.
                 </p>
               </div>
               <button
                 onClick={() => navigate('/login')}
-                className="mt-4 w-full bg-krosh-buttonSecondary text-white py-2 rounded-lg font-medium shadow-md"
+                className="mt-4 w-full bg-gradient-to-r from-krosh-lavender to-krosh-pink text-white py-3 rounded-lg font-medium text-lg shadow-lg hover:opacity-90 transition-opacity"
               >
                 Return to Login
               </button>
@@ -97,7 +112,7 @@ const ForgotPassword: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your.email@example.com"
-                    className="w-full py-2 pl-10 pr-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-krosh-lavender/50"
+                    className="w-full py-2 pl-10 pr-3 bg-white/80 backdrop-blur-[2px] border border-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-krosh-lavender/50 focus:bg-white/90"
                     required
                   />
                 </div>
@@ -107,7 +122,7 @@ const ForgotPassword: React.FC = () => {
                 <motion.button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-krosh-buttonPrimary text-white py-2 rounded-lg font-medium shadow-md disabled:opacity-70"
+                  className="w-full bg-gradient-to-r from-krosh-lavender to-krosh-pink text-white py-3 rounded-lg font-medium text-lg shadow-lg disabled:opacity-70 hover:opacity-90 transition-opacity"
                   whileTap={{ scale: 0.98 }}
                 >
                   {loading ? 'Sending...' : 'Send Reset Link'}
@@ -117,16 +132,16 @@ const ForgotPassword: React.FC = () => {
           )}
         </div>
 
-        <div className="mt-6 text-center space-y-3">
-          <p className="text-sm text-gray-600">
+        <div className="mt-8 text-center space-y-4">
+          <p className="text-base text-white">
             Remember your password?{' '}
-            <Link to="/login" className="text-krosh-buttonPrimary font-medium hover:underline">
+            <Link to="/login" className="text-white font-medium hover:underline">
               Log In
             </Link>
           </p>
           <button
             onClick={() => navigate('/')}
-            className="text-sm text-gray-600 hover:text-krosh-lavender transition-colors flex items-center justify-center gap-1 mx-auto"
+            className="text-sm text-white/80 hover:text-white transition-colors flex items-center justify-center gap-1 mx-auto bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm"
           >
             <ArrowLeft size={14} />
             Back to Home
