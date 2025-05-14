@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, MapPin, LogOut, Edit, Plus } from 'lucide-react';
+import { User, Mail, Phone, MapPin, LogOut, Edit, Plus, Package, ChevronRight } from 'lucide-react';
 import AnimatedContainer from '../components/ui/AnimatedContainer';
 import SectionHeader from '../components/ui/SectionHeader';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -191,9 +191,31 @@ const Profile: React.FC = () => {
 
         {/* Orders Section */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h3 className="font-semibold mb-4">Recent Orders</h3>
-          <Link to="/orders" className="text-krosh-lavender text-sm flex justify-center">
-            View All Orders
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold">My Orders</h3>
+            <Link
+              to="/orders"
+              className="text-sm text-krosh-lavender flex items-center gap-1"
+            >
+              <span>View All</span>
+              <ChevronRight size={16} />
+            </Link>
+          </div>
+
+          <Link
+            to="/orders"
+            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-krosh-lavender/20 rounded-full flex items-center justify-center">
+                <Package size={20} className="text-krosh-lavender" />
+              </div>
+              <div>
+                <p className="font-medium">Track Orders</p>
+                <p className="text-sm text-gray-500">View and track your orders</p>
+              </div>
+            </div>
+            <ChevronRight size={20} className="text-gray-400" />
           </Link>
         </div>
 

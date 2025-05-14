@@ -61,10 +61,12 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ toggleSidebar }) => {
           >
             <ShoppingCart size={24} />
             {cartItemsCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-krosh-buttonPrimary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium shadow-sm">
-                {cartItemsCount}
+              <span className="absolute -top-1 -right-1 bg-krosh-pink text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium shadow-sm">
+                {cartItemsCount > 99 ? '99+' : cartItemsCount}
               </span>
             )}
+            {/* Debug info - using a self-executing function to avoid React node issues */}
+            {(() => { console.log('Cart count in TopNavbar:', cartItemsCount); return null; })()}
           </Link>
 
           {/* Login Button or User Dropdown */}
@@ -77,7 +79,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ toggleSidebar }) => {
             <Link
               to="/login"
               state={{ from: location }} // Pass current location for redirect after login
-              className="px-4 py-1.5 bg-krosh-buttonSecondary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-md"
+              className="px-4 py-2 bg-gradient-to-r from-krosh-lavender to-krosh-pink text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-lg"
             >
               Login
             </Link>

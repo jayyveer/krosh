@@ -95,25 +95,48 @@ export async function getAllProducts() {
 let cachedUserId: string | null = null;
 
 export async function getCart() {
-  // Use cached user ID if available to reduce auth API calls
-  if (!cachedUserId) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-    cachedUserId = user.id;
+  try {
+    // Use cached user ID if available to reduce auth API calls
+    if (!cachedUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('No user found, returning empty cart');
+        return [];
+      }
+      cachedUserId = user.id;
+    }
+
+    console.log('Fetching cart for user:', cachedUserId);
+
+    const { data, error } = await supabase
+      .from('cart_items')
+      .select(`
+        id,
+        quantity,
+        product:products(id, name, price, original_price, size),
+        variant:product_variants!cart_items_variant_id_fkey(id, name, color, stock, image_urls)
+      `)
+      .eq('user_id', cachedUserId);
+
+    if (error) {
+      console.error('Error fetching cart:', error);
+      throw error;
+    }
+
+    // Log the cart data for debugging
+    console.log('Cart data from API:', data);
+
+    // Ensure quantity is a number
+    const processedData = data?.map(item => ({
+      ...item,
+      quantity: Number(item.quantity) || 1 // Default to 1 if quantity is invalid
+    })) || [];
+
+    return processedData as CartItem[];
+  } catch (error) {
+    console.error('Error in getCart:', error);
+    throw error;
   }
-
-  const { data, error } = await supabase
-    .from('cart_items')
-    .select(`
-      id,
-      quantity,
-      product:products(id, name, price, original_price, size),
-      variant:product_variants!cart_items_variant_id_fkey(id, name, color, stock, image_urls)
-    `)
-    .eq('user_id', cachedUserId);
-
-  if (error) throw error;
-  return data as CartItem[];
 }
 
 export async function addToCart(productId: string, variantId: string, quantity: number) {
@@ -154,6 +177,23 @@ export async function updateCartItemQuantity(itemId: string, quantity: number) {
     .eq('id', itemId);
 
   if (error) throw error;
+}
+
+export async function clearCart() {
+  // Use cached user ID if available
+  if (!cachedUserId) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+    cachedUserId = user.id;
+  }
+
+  const { error } = await supabase
+    .from('cart_items')
+    .delete()
+    .eq('user_id', cachedUserId);
+
+  if (error) throw error;
+  return true;
 }
 
 export async function getAdminData() {

@@ -14,6 +14,7 @@ import Register from './screens/Register';
 import ForgotPassword from './screens/ForgotPassword';
 import ResetPassword from './screens/ResetPassword';
 import Cart from './screens/Cart';
+import Orders from './screens/Orders';
 import Categories from './screens/Categories';
 import ProductDetail from './screens/ProductDetail';
 import AdminDashboard from './screens/admin/AdminDashboard';
@@ -59,6 +60,7 @@ function App() {
                   <Route path="categories" element={<Categories />} />
                   <Route path="profile" element={<Profile />} />
                   <Route path="cart" element={<Cart />} />
+                  <Route path="orders" element={<Orders />} />
                   <Route path="product/:id" element={<ProductDetail />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>

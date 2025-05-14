@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { fetchCart, addItemToCart, removeItemFromCart, updateItemQuantity } from '../redux/slices/cartSlice';
+import { fetchCart, addItemToCart, removeItemFromCart, updateItemQuantity, clearCartAsync } from '../redux/slices/cartSlice';
 
 export function useCart() {
   const { user } = useAuthContext();
@@ -41,13 +41,27 @@ export function useCart() {
     }
   };
 
+  // Calculate total quantity of items in cart
+  const cartItemsCount = cartItems.reduce((total, item) => {
+    console.log('Cart item:', item, 'Quantity:', item.quantity);
+    return total + item.quantity;
+  }, 0);
+
+  // Log the total count for debugging
+  console.log('Total cart items count:', cartItemsCount);
+
+  const clearCart = async () => {
+    await dispatch(clearCartAsync()).unwrap();
+  };
+
   return {
     cartItems,
-    cartItemsCount: cartItems.length,
+    cartItemsCount,
     loading,
     addToCart,
     removeFromCart,
     updateQuantity,
-    reloadCart
+    reloadCart,
+    clearCart
   };
 }

@@ -1,10 +1,22 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { getCart, addToCart, removeFromCart, updateCartItemQuantity } from '../../lib/api';
+import { getCart, addToCart, removeFromCart, updateCartItemQuantity, clearCart as clearCartApi } from '../../lib/api';
 
 export type CartItem = {
   id: string;
-  product: any;
-  variant: any;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    original_price?: number;
+    size?: string;
+  };
+  variant: {
+    id: string;
+    name?: string;
+    color?: string;
+    stock?: number;
+    image_urls?: string[];
+  };
   quantity: number;
 };
 
@@ -22,8 +34,14 @@ const initialState: CartState = {
 
 // Async thunks
 export const fetchCart = createAsyncThunk('cart/fetchCart', async () => {
-  const items = await getCart();
-  return items || [];
+  try {
+    const items = await getCart();
+    console.log('Fetched cart items:', items);
+    return items || [];
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    throw error;
+  }
 });
 
 export const addItemToCart = createAsyncThunk(
@@ -51,6 +69,16 @@ export const updateItemQuantity = createAsyncThunk(
     await updateCartItemQuantity(itemId, quantity);
     // Immediately update the UI with the new quantity
     return { itemId, quantity };
+  }
+);
+
+export const clearCartAsync = createAsyncThunk(
+  'cart/clearCartAsync',
+  async (_, { dispatch }) => {
+    await clearCartApi();
+    // Dispatch the clearCart action to update the state
+    dispatch(clearCart());
+    return true;
   }
 );
 
