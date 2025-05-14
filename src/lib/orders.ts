@@ -1,20 +1,26 @@
 import { supabase } from './supabase';
-import { CartItem } from '../contexts/CartContext';
+
+// Define a simplified version of CartItem for order creation
+interface OrderItem {
+  id: string;
+  product_id: string;
+  variant_id: string;
+  quantity: number;
+  price: number;
+}
 
 interface CreateOrderParams {
   userId: string;
-  items: CartItem[];
-  shippingAddress: string;
+  items: OrderItem[];
+  addressId: string;
   paymentMethod: 'cod' | 'online';
-  notes?: string;
 }
 
 export async function createOrder({
   userId,
   items,
-  shippingAddress,
+  addressId,
   paymentMethod,
-  notes
 }: CreateOrderParams) {
   try {
     // Calculate total amount
@@ -29,9 +35,10 @@ export async function createOrder({
         {
           user_id: userId,
           total_amount: totalAmount,
-          shipping_address: shippingAddress,
+          address_id: addressId,
           payment_method: paymentMethod,
-          notes: notes || null
+          status: 'requested',
+          payment_status: 'pending'
         }
       ])
       .select()
@@ -104,16 +111,37 @@ export async function getOrderById(orderId: string) {
 
     return {
       ...order,
-      items: items.map(item => ({
-        id: item.id,
-        product_id: item.product_id,
-        variant_id: item.variant_id,
-        quantity: item.quantity,
-        price: item.price,
-        product_name: item.products?.name || 'Unknown Product',
-        variant_name: item.product_variants?.name || '',
-        image_url: item.product_variants?.image_urls?.[0] || ''
-      }))
+      items: items.map(item => {
+        // Access the nested objects safely
+        const productName = item.products && typeof item.products === 'object'
+          ? (Array.isArray(item.products)
+              ? (item.products[0]?.name || 'Unknown Product')
+              : (item.products as any).name || 'Unknown Product')
+          : 'Unknown Product';
+
+        const variantName = item.product_variants && typeof item.product_variants === 'object'
+          ? (Array.isArray(item.product_variants)
+              ? (item.product_variants[0]?.name || '')
+              : (item.product_variants as any).name || '')
+          : '';
+
+        const variantImageUrl = item.product_variants && typeof item.product_variants === 'object'
+          ? (Array.isArray(item.product_variants)
+              ? (item.product_variants[0]?.image_urls?.[0] || '')
+              : (item.product_variants as any).image_urls?.[0] || '')
+          : '';
+
+        return {
+          id: item.id,
+          product_id: item.product_id,
+          variant_id: item.variant_id,
+          quantity: item.quantity,
+          price: item.price,
+          product_name: productName,
+          variant_name: variantName,
+          image_url: variantImageUrl
+        };
+      })
     };
   } catch (error) {
     console.error('Error fetching order details:', error);

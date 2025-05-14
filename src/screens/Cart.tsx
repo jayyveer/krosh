@@ -1,16 +1,163 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ShoppingCart, AlertCircle, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShoppingCart, Trash2 } from 'lucide-react';
 import AnimatedContainer from '../components/ui/AnimatedContainer';
 import SectionHeader from '../components/ui/SectionHeader';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useCart } from '../hooks/useCart';
+import { useToast } from '../contexts/ToastContext';
 import { formatPrice } from '../lib/formatters';
+import { createOrder } from '../lib/orders';
+import { supabase } from '../lib/supabase';
+
+// Import checkout components
+import CheckoutStepIndicator from '../components/checkout/CheckoutStepIndicator';
+import VerifyOrderStep from '../components/checkout/VerifyOrderStep';
+import ShippingAddressStep from '../components/checkout/ShippingAddressStep';
+import OrderSummaryStep from '../components/checkout/OrderSummaryStep';
+
+interface Address {
+  id: string;
+  user_id: string;
+  address_line1: string;
+  address_line2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  created_at?: string;
+}
+
+
 
 const Cart: React.FC = () => {
   const { user } = useAuthContext();
-  const { cartItems, loading, updateQuantity, removeFromCart } = useCart();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { cartItems, loading, updateQuantity, removeFromCart, clearCart } = useCart();
+
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+  // Default payment method is Cash on Delivery
+  const paymentMethod = 'cod' as const;
+  const [userAddresses, setUserAddresses] = useState<Address[]>([]);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<'verify' | 'address' | 'summary'>('verify');
+  const [processingOrder, setProcessingOrder] = useState(false);
+
+  // Fetch user addresses when checking out
+  const fetchAddresses = async () => {
+    if (!user) return;
+
+    try {
+      setLoadingAddresses(true);
+
+      // Fetch addresses from the addresses table
+      const { data: addresses, error } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      console.log('Fetched addresses:', addresses);
+
+      if (addresses && addresses.length > 0) {
+        setUserAddresses(addresses);
+
+        // Auto-select the first address
+        setSelectedAddress(addresses[0].id);
+      } else {
+        // No addresses found
+        setUserAddresses([]);
+        setSelectedAddress(null);
+      }
+    } catch (err) {
+      console.error('Error fetching addresses:', err);
+      showToast('Failed to load your addresses', 'error');
+    } finally {
+      setLoadingAddresses(false);
+    }
+  };
+
+  const startCheckout = () => {
+    setIsCheckingOut(true);
+    setCheckoutStep('verify');
+  };
+
+  const proceedToAddressStep = () => {
+    setCheckoutStep('address');
+    fetchAddresses();
+  };
+
+  const proceedToSummaryStep = () => {
+    setCheckoutStep('summary');
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!user || !selectedAddress) return;
+
+    try {
+      setProcessingOrder(true);
+
+      // Find the selected address
+      const address = userAddresses.find(addr => addr.id === selectedAddress);
+      if (!address) {
+        showToast('Please select a valid shipping address', 'error');
+        return;
+      }
+
+      // Create order data
+      const orderData = {
+        userId: user.id,
+        items: cartItems.map(item => ({
+          id: item.id,
+          product_id: item.product.id,
+          variant_id: item.variant.id,
+          quantity: item.quantity,
+          price: Number(item.product.price)
+        })),
+        addressId: address.id, // Use address ID instead of formatted address
+        paymentMethod: paymentMethod, // Using the const defined above
+      };
+
+      // Log order details to console
+      console.log('Order placed with details:', orderData);
+
+      // Create order in database
+      const result = await createOrder(orderData);
+
+      if (result.success) {
+        // Clear cart after successful order
+        await clearCart();
+
+        // Show success animation and message
+        showToast('Order placed successfully!', 'success');
+
+        // Add a small delay before redirecting to orders page
+        setTimeout(() => {
+          navigate('/orders');
+        }, 1000);
+      } else {
+        showToast('Failed to place order. Please try again.', 'error');
+      }
+    } catch (err) {
+      console.error('Error placing order:', err);
+      showToast('An error occurred while placing your order', 'error');
+    } finally {
+      setProcessingOrder(false);
+    }
+  };
+
+  const goBack = () => {
+    if (checkoutStep === 'verify') {
+      setIsCheckingOut(false);
+    } else if (checkoutStep === 'address') {
+      setCheckoutStep('verify');
+    } else if (checkoutStep === 'summary') {
+      setCheckoutStep('address');
+    }
+  };
 
   if (!user) {
     return <Navigate to="/profile" replace />;
@@ -85,13 +232,70 @@ const Cart: React.FC = () => {
     return total + (Number(item.product.price) * item.quantity);
   }, 0);
 
+  // Render checkout steps
+  const renderCheckoutSteps = () => {
+    // Step 1: Verify Order
+    if (checkoutStep === 'verify') {
+      return (
+        <VerifyOrderStep
+          cartItems={cartItems}
+          onBackClick={goBack}
+          onContinue={proceedToAddressStep}
+        />
+      );
+    }
+    // Step 2: Select Address
+    else if (checkoutStep === 'address') {
+      return (
+        <ShippingAddressStep
+          userAddresses={userAddresses}
+          selectedAddress={selectedAddress}
+          loadingAddresses={loadingAddresses}
+          onAddressSelect={setSelectedAddress}
+          onBackClick={goBack}
+          onContinue={proceedToSummaryStep}
+        />
+      );
+    }
+    // Step 3: Order Summary and Completion
+    else if (checkoutStep === 'summary') {
+      // Find the selected address
+      const selectedAddressObj = userAddresses.find(addr => addr.id === selectedAddress);
+
+      return (
+        <OrderSummaryStep
+          cartItems={cartItems}
+          selectedAddress={selectedAddressObj || null}
+          processingOrder={processingOrder}
+          onBackClick={goBack}
+          onPlaceOrder={handlePlaceOrder}
+        />
+      );
+    }
+
+    return null;
+  };
+
+  // Render checkout step indicator
+  const renderStepIndicator = () => {
+    if (!isCheckingOut) return null;
+    return <CheckoutStepIndicator currentStep={checkoutStep} />;
+  };
+
   return (
     <AnimatedContainer>
       <div className="py-4">
-        <SectionHeader title="Your Cart" showBackButton={true} />
+        {isCheckingOut ? (
+          <>
+            {renderStepIndicator()}
+            {renderCheckoutSteps()}
+          </>
+        ) : (
+          <>
+            <SectionHeader title="Your Cart" showBackButton={true} />
 
-        <div className="space-y-4 mb-6">
-          {cartItems.map((item) => (
+            <div className="space-y-4 mb-6">
+              {cartItems.map((item) => (
             <div key={item.id} className="bg-white rounded-lg shadow-sm p-4 flex items-center gap-4">
               <img
                 src={item.variant.image_urls?.[0] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
@@ -161,10 +365,15 @@ const Cart: React.FC = () => {
             <span className="text-lg font-semibold">Total</span>
             <span className="text-lg font-bold">{formatPrice(totalPrice)}</span>
           </div>
-          <button className="w-full mt-4 py-3 bg-krosh-pink text-white rounded-lg font-medium hover:opacity-90 transition-opacity">
+          <button
+            onClick={startCheckout}
+            className="w-full mt-4 py-3 bg-gradient-to-r from-krosh-lavender to-krosh-pink text-white rounded-lg font-medium hover:opacity-90 transition-opacity shadow-md"
+          >
             Proceed to Checkout
           </button>
-        </div>
+            </div>
+          </>
+        )}
       </div>
     </AnimatedContainer>
   );

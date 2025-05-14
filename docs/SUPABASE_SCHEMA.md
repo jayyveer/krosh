@@ -163,7 +163,6 @@ CREATE TABLE inventory_logs (
   variant_id uuid REFERENCES product_variants(id) ON DELETE RESTRICT,
   action inventory_action NOT NULL,
   quantity integer NOT NULL,
-  notes text,
   created_by uuid REFERENCES users(id) ON DELETE RESTRICT,
   created_at timestamptz DEFAULT now()
 );
