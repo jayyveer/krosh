@@ -72,9 +72,24 @@ const AdminLayout: React.FC = () => {
             >
               <Menu size={24} />
             </button>
-            <h1 className="text-lg font-bold bg-gradient-to-r from-krosh-pink via-krosh-lavender to-krosh-blue bg-clip-text text-transparent">
-              Krosh Admin
-            </h1>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg overflow-hidden border-2 border-krosh-lavender/30 shadow-sm">
+                <img
+                  src="/images/yarn-by-krosh.jpeg"
+                  alt="Yarn by Krosh Logo"
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    console.error('Logo failed to load');
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+              <div className="leading-tight">
+                <span className="text-base font-medium text-krosh-text">
+                  Yarn by Krosh Admin
+                </span>
+              </div>
+            </div>
             <div className="w-8"></div> {/* Empty div for balance */}
           </div>
         </header>

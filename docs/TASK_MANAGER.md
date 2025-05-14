@@ -12,20 +12,6 @@ This document outlines the pending tasks for the Krosh e-commerce platform in or
 
 ## Action Plan
 
-### P0: Critical Issues
-
-1. **Fix Product Variant Schema Issue**
-   - Remove SKU column from product_variants table and UI
-   - Remove size from product_variants in UI and schema in admin section
-   - Update AdminProductVariants.tsx to remove these fields
-   - Update related database migrations if necessary
-   - *Estimated time: 2-3 hours*
-
-2. **Fix Disabled Button Styling**
-   - Review and update button styling to ensure they don't appear disabled
-   - Update button component styles across the application
-   - *Estimated time: 1-2 hours*
-
 ### P1: Core Functionality
 
 3. **Implement User Registration**
@@ -44,15 +30,6 @@ This document outlines the pending tasks for the Krosh e-commerce platform in or
    - Update order status from requested to approved to shipped
    - Add notifications for status changes
    - *Estimated time: 4-5 hours*
-
-6. **Convert Currency to Rupees**
-   - Update price display across the application
-   - Add ₹ symbol instead of $
-   - *Estimated time: 1-2 hours*
-
-7. **Remove Search from Sidebar**
-   - Update Sidebar.tsx to remove search option
-   - *Estimated time: 30 minutes*
 
 ### P2: Important Features
 
@@ -83,9 +60,6 @@ This document outlines the pending tasks for the Krosh e-commerce platform in or
     - Show order history and status
     - *Estimated time: 5-6 hours*
 
-13. **Add Categories Dropdown in Sidebar**
-    - Update Sidebar.tsx to include categories dropdown
-    - *Estimated time: 2-3 hours*
 
 14. **Manage User Addresses**
     - Implement save, delete, and set primary address functionality
@@ -126,15 +100,6 @@ This document outlines the pending tasks for the Krosh e-commerce platform in or
 21. **Update Footer**
     - Add categories and sidebar sections to footer
     - Add policies in the footer
-    - *Estimated time: 2-3 hours*
-
-22. **Add Favicon Icon**
-    - Create and add favicon
-    - Update index.html
-    - *Estimated time: 1 hour*
-
-23. **Add Logo to Navbar**
-    - Design solution for circular logo in navbar
     - *Estimated time: 2-3 hours*
 
 ### P4: Future Enhancements

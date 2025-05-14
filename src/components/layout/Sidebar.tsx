@@ -129,17 +129,34 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
         initial="closed"
         animate={isOpen ? "open" : "closed"}
       >
-        <div className="p-4 flex justify-between items-center md:hidden">
-          <h2 className="font-semibold text-lg">Menu</h2>
+        <div className="p-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg overflow-hidden border-2 border-krosh-lavender/30 shadow-sm">
+              <img
+                src="/images/yarn-by-krosh.jpeg"
+                alt="Yarn by Krosh Logo"
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  console.error('Logo failed to load');
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+            <div className="leading-tight">
+              <span className="text-base font-medium text-krosh-text">
+                Yarn by Krosh
+              </span>
+            </div>
+          </div>
           <button
             onClick={closeSidebar}
-            className="p-2 rounded-full hover:bg-krosh-lavender/30"
+            className="p-2 rounded-full hover:bg-krosh-lavender/30 md:hidden"
           >
             <X size={20} />
           </button>
         </div>
 
-        <nav className="mt-2 flex-1">
+        <nav className="mt-4 flex-1">
           <ul className="space-y-2 px-2">
             {menuItems.map(item => (
               <li key={item.name}>

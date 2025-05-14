@@ -32,10 +32,24 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ toggleSidebar }) => {
             <Menu size={24} />
           </button>
 
-          <Link to="/" className="flex items-center">
-            <h1 className="text-2xl font-semibold bg-gradient-to-r from-krosh-pink via-krosh-lavender to-krosh-blue bg-clip-text text-transparent">
-              Krosh
-            </h1>
+          <Link to="/" className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-lg overflow-hidden border-2 border-krosh-lavender/30 shadow-sm">
+              <img
+                src="/images/yarn-by-krosh.jpeg"
+                alt="Yarn by Krosh Logo"
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  console.error('Logo failed to load');
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-medium text-krosh-text">Yarn by</span>
+              <span className="text-xl font-semibold text-krosh-text">
+                Krosh
+              </span>
+            </div>
           </Link>
         </div>
 
@@ -47,7 +61,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ toggleSidebar }) => {
           >
             <ShoppingCart size={24} />
             {cartItemsCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-krosh-pink text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-krosh-buttonPrimary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium shadow-sm">
                 {cartItemsCount}
               </span>
             )}
@@ -63,7 +77,7 @@ const TopNavbar: React.FC<TopNavbarProps> = ({ toggleSidebar }) => {
             <Link
               to="/login"
               state={{ from: location }} // Pass current location for redirect after login
-              className="px-4 py-1.5 bg-krosh-lavender text-krosh-text rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+              className="px-4 py-1.5 bg-krosh-buttonSecondary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-md"
             >
               Login
             </Link>
