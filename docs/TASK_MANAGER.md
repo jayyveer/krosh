@@ -14,37 +14,28 @@ This document outlines the pending tasks for the Krosh e-commerce platform in or
 
 ### P1: Core Functionality
 
-3. **Implement User Registration**
-   - Create registration page with form validation
-   - Implement registration functionality using Supabase auth
-   - Add user data to users table after successful registration
-   - *Estimated time: 4-6 hours*
-
-4. **Complete Orders Page in Admin**
+1. **Complete Orders Page in Admin**
    - Finish implementation of AdminOrders.tsx
    - Add order status management functionality
    - Implement order details view
-   - *Estimated time: 6-8 hours*
 
-5. **Implement Order Status Workflow**
+2. **Implement Order Status Workflow**
    - Update order status from requested to approved to shipped
    - Add notifications for status changes
-   - *Estimated time: 4-5 hours*
 
 ### P2: Important Features
 
-8. **Implement Settings Page in Admin**
+3. **Implement Settings Page in Admin**
    - Create AdminSettings.tsx with configuration options
    - Add store settings management
    - *Estimated time: 6-8 hours*
 
-9. **Redesign Cart Page**
+4. **Redesign Cart Page**
    - Improve UI/UX of the cart page
    - Add better product display
    - Improve quantity controls
-   - *Estimated time: 4-6 hours*
 
-10. **Redesign Home Page**
+5. **Redesign Home Page**
     - Add beginners kit section
     - Add information about crocheting
     - Improve overall layout and visual appeal

@@ -1,50 +1,81 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Lock, ArrowLeft } from 'lucide-react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { signIn } from '../lib/auth';
+import { Mail, Lock, User, ArrowLeft } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { signUp } from '../lib/auth';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 
-const Login: React.FC = () => {
+const Register: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuthContext();
   const { showToast } = useToast();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Get the redirect path from location state or default to home
-  const from = location.state?.from?.pathname || '/';
-
-  // If user is already logged in, redirect
+  // If user is already logged in, redirect to home
   useEffect(() => {
     if (user) {
-      navigate(from, { replace: true });
+      navigate('/', { replace: true });
     }
-  }, [user, navigate, from]);
+  }, [user, navigate]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const validatePassword = (password: string): boolean => {
+    // Password must be at least 8 characters
+    return password.length >= 8;
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+
+    // Validate password strength
+    if (!validatePassword(password)) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { user } = await signIn(email, password);
-      // Show success toast
-      showToast(`Welcome back${user?.user_metadata?.name ? ', ' + user.user_metadata.name : ''}!`, 'success');
-      // Redirect will happen automatically due to the useEffect
-    } catch (err: any) {
-      console.error('Login error:', err);
+      const { user, session } = await signUp(email, password, name);
 
-      if (err.message === 'ACCOUNT_DISABLED') {
-        setError(
-          'Your account has been disabled. Please contact kroshenquiry@gmail.com for assistance.'
-        );
+      if (user) {
+        showToast(`Welcome to Yarn by Krosh, ${name}!`, 'success');
+
+        // If we got a session, the user is already logged in
+        if (session) {
+          navigate('/');
+        } else {
+          // Otherwise, redirect to login
+          navigate('/login');
+        }
       } else {
-        setError('Invalid email or password');
+        // This should rarely happen
+        showToast('Registration successful!', 'success');
+        navigate('/login');
+      }
+    } catch (err: any) {
+      console.error('Registration error:', err);
+
+      if (err.message.includes('already registered')) {
+        setError('This email is already registered. Please use a different email or try logging in.');
+      } else if (err.code === '42501' || err.message.includes('violates row-level security policy')) {
+        // This is the RLS policy error
+        setError('There was an issue creating your account. Please try again later or contact support.');
+        console.error('RLS policy error during signup. Please check your Supabase RLS policies.');
+      } else {
+        setError(err.message || 'Failed to register. Please try again.');
       }
       setLoading(false);
     }
@@ -73,18 +104,38 @@ const Login: React.FC = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-krosh-text">
-            Welcome Back
+            Create Account
           </h1>
-          <p className="text-gray-600 mt-2">Sign in to your account</p>
+          <p className="text-gray-600 mt-2">Join Yarn by Krosh today</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4">
             {error && (
               <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg">
                 {error}
               </div>
             )}
+
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name
+              </label>
+              <div className="relative">
+                <div className="absolute left-3 top-3 text-gray-400">
+                  <User size={16} />
+                </div>
+                <input
+                  type="text"
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your Name"
+                  className="w-full py-2 pl-10 pr-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-krosh-lavender/50"
+                  required
+                />
+              </div>
+            </div>
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -124,15 +175,27 @@ const Login: React.FC = () => {
                   required
                 />
               </div>
+              <p className="text-xs text-gray-500 mt-1">Password must be at least 8 characters long</p>
             </div>
 
-            <div className="flex justify-end mb-2">
-              <Link
-                to="/forgot-password"
-                className="text-sm text-krosh-buttonPrimary hover:underline"
-              >
-                Forgot password?
-              </Link>
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <div className="absolute left-3 top-3 text-gray-400">
+                  <Lock size={16} />
+                </div>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full py-2 pl-10 pr-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-krosh-lavender/50"
+                  required
+                />
+              </div>
             </div>
 
             <div className="pt-2">
@@ -142,7 +205,7 @@ const Login: React.FC = () => {
                 className="w-full bg-krosh-buttonPrimary text-white py-2 rounded-lg font-medium shadow-md disabled:opacity-70"
                 whileTap={{ scale: 0.98 }}
               >
-                {loading ? 'Logging in...' : 'Log In'}
+                {loading ? 'Creating Account...' : 'Create Account'}
               </motion.button>
             </div>
           </form>
@@ -150,9 +213,9 @@ const Login: React.FC = () => {
 
         <div className="mt-6 text-center space-y-3">
           <p className="text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-krosh-buttonPrimary font-medium hover:underline">
-              Sign Up
+            Already have an account?{' '}
+            <Link to="/login" className="text-krosh-buttonPrimary font-medium hover:underline">
+              Log In
             </Link>
           </p>
           <button
@@ -168,4 +231,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default Register;

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 
 export async function signUp(email: string, password: string, name: string) {
+  // Sign up with Supabase Auth - no email verification
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -10,31 +11,36 @@ export async function signUp(email: string, password: string, name: string) {
       data: {
         name,
       },
+      // Explicitly disable email verification
+      emailRedirectTo: '',
     },
   });
 
   if (error) throw error;
 
-  if (data.user) {
-    // Create user profile
-    const { error: profileError } = await supabase
-      .from('users')
-      .insert([
-        {
-          id: data.user.id,
-          email: data.user.email,
-          name,
-        },
-      ]);
+  // If we don't have a session (user is not automatically logged in),
+  // sign them in immediately
+  if (data.user && !data.session) {
+    try {
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (profileError) throw profileError;
+      if (!signInError) {
+        return signInData;
+      }
+    } catch (signInErr) {
+      console.error('Auto sign-in after registration failed:', signInErr);
+      // Continue with the original data even if auto sign-in fails
+    }
   }
 
   return data;
 }
 
 export async function signIn(email: string, password: string) {
-  // First, sign in with Supabase Auth
+  // Sign in with Supabase Auth
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -65,6 +71,22 @@ export async function signIn(email: string, password: string) {
 
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+export async function resetPassword(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+
+  if (error) throw error;
+}
+
+export async function updatePassword(newPassword: string) {
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
   if (error) throw error;
 }
 

@@ -10,6 +10,9 @@ import Shop from './screens/Shop';
 import Search from './screens/Search';
 import Profile from './screens/Profile';
 import Login from './screens/Login';
+import Register from './screens/Register';
+import ForgotPassword from './screens/ForgotPassword';
+import ResetPassword from './screens/ResetPassword';
 import Cart from './screens/Cart';
 import Categories from './screens/Categories';
 import ProductDetail from './screens/ProductDetail';
@@ -30,8 +33,11 @@ function App() {
           <div className="bg-krosh-background min-h-screen text-krosh-text font-sans">
             <AnimatePresence mode="wait">
               <Routes>
-                {/* Login route outside of Layout */}
+                {/* Auth routes outside of Layout */}
                 <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* Admin routes with AdminLayout */}
                 <Route path="/admin-access" element={<AdminLayout />}>
