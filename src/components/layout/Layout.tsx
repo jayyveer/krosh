@@ -45,7 +45,7 @@ const Layout: React.FC = () => {
         <Sidebar isOpen={isSidebarOpen} closeSidebar={closeSidebar} />
 
         <main className="flex-1 pb-16 md:pb-0 pt-16 overflow-auto">
-          <div className="container mx-auto px-4 py-4 min-h-full">
+          <div className="container mx-auto px-4 py-0 min-h-full">
             <Outlet />
           </div>
         </main>

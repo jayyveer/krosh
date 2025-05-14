@@ -27,7 +27,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-between mb-6 relative">
+    <div className="flex items-center justify-between mb-3 relative">
       <div className="flex items-center">
         {showBackButton && (
           <motion.button

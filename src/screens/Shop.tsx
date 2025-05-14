@@ -190,7 +190,7 @@ const Shop: React.FC = () => {
         />
 
         {/* Category filters */}
-        <div className="mb-8 overflow-x-auto pb-2">
+        <div className="mb-5 overflow-x-auto pb-2">
           <div className="flex space-x-2">
             {categories.map(category => (
               <FilterButton

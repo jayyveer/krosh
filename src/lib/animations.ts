@@ -48,6 +48,7 @@ export const sidebarVariants: Variants = {
       type: 'spring',
       stiffness: 300,
       damping: 30,
+      duration: 0.4,
     },
   },
   closed: {
@@ -55,8 +56,9 @@ export const sidebarVariants: Variants = {
     opacity: 0,
     transition: {
       type: 'spring',
-      stiffness: 300,
-      damping: 30,
+      stiffness: 400,
+      damping: 40,
+      duration: 0.4,
     },
   },
 };

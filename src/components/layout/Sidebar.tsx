@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Home, ShoppingBag, Info, Package, ShoppingCart, X, LogOut, Grid3X3, Settings, ChevronDown, ChevronRight } from 'lucide-react';
-import { sidebarVariants } from '../../lib/animations';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { signOut } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
@@ -28,7 +27,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
   const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
 
   // Check admin status when the user hovers over the sidebar
-  // This is a simple way to lazy-load the admin status without affecting performance
   useEffect(() => {
     const handleMouseEnter = async () => {
       if (user && !adminChecked) {
@@ -36,7 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
       }
     };
 
-    const sidebarElement = document.getElementById('main-sidebar');
+    const sidebarElement = document.getElementById('desktop-sidebar');
     if (sidebarElement) {
       sidebarElement.addEventListener('mouseenter', handleMouseEnter);
       return () => {
@@ -110,122 +108,153 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
     }
   };
 
+  // Sidebar content component to avoid duplication
+  const SidebarContent = () => (
+    <>
+      <div className="pt-4 pr-4 pl-4 flex justify-between items-center mt-0">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg overflow-hidden border-2 border-krosh-lavender/30 shadow-sm">
+            <img
+              src="/images/yarn-by-krosh.jpeg"
+              alt="Yarn by Krosh Logo"
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                console.error('Logo failed to load');
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+          <div className="leading-tight">
+            <span className="text-base font-medium text-krosh-text">
+              Yarn by Krosh
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={closeSidebar}
+          className="p-2 rounded-full hover:bg-krosh-lavender/30 md:hidden"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <nav className="mt-4 flex-1">
+        <ul className="space-y-2 px-2">
+          {menuItems.map(item => (
+            <li key={item.name}>
+              {item.hasDropdown ? (
+                <div>
+                  <button
+                    onClick={() => setShowCategoriesDropdown(!showCategoriesDropdown)}
+                    className="flex items-center justify-between w-full px-4 py-3 rounded-lg transition-colors hover:bg-krosh-lavender/10"
+                  >
+                    <div className="flex items-center gap-3">
+                      {item.icon}
+                      <span>{item.name}</span>
+                    </div>
+                    {showCategoriesDropdown ? (
+                      <ChevronDown size={16} />
+                    ) : (
+                      <ChevronRight size={16} />
+                    )}
+                  </button>
+
+                  {showCategoriesDropdown && (
+                    <div className="ml-8 mt-1 space-y-1">
+                      {item.dropdownItems?.map(dropdownItem => (
+                        <Link
+                          key={dropdownItem.name}
+                          to={dropdownItem.path}
+                          state={dropdownItem.state}
+                          onClick={closeSidebar}
+                          className="block px-4 py-2 rounded-lg text-sm hover:bg-krosh-lavender/10 transition-colors"
+                        >
+                          {dropdownItem.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <NavLink
+                  to={item.path}
+                  onClick={closeSidebar}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
+                     ${isActive
+                       ? 'bg-krosh-lavender/30 text-krosh-text font-medium'
+                       : 'hover:bg-krosh-lavender/10'}`
+                  }
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                </NavLink>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Logout button at the bottom of sidebar */}
+      {user && (
+        <div className="mt-auto p-4 border-t">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left hover:bg-red-50 text-red-600 transition-colors"
+          >
+            <LogOut size={20} />
+            <span>Logout</span>
+          </button>
+        </div>
+      )}
+    </>
+  );
+
   return (
     <>
       {/* Overlay for mobile */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={closeSidebar}
-        />
-      )}
-
-      <motion.div
-        id="main-sidebar"
-        className={`fixed top-0 left-0 h-full w-64 bg-white z-50 shadow-lg pt-16
-                   md:pt-16 md:sticky md:shadow-none flex flex-col
-                   ${isOpen ? 'block' : 'hidden md:block'}`}
-        variants={sidebarVariants}
-        initial="closed"
-        animate={isOpen ? "open" : "closed"}
-      >
-        <div className="p-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg overflow-hidden border-2 border-krosh-lavender/30 shadow-sm">
-              <img
-                src="/images/yarn-by-krosh.jpeg"
-                alt="Yarn by Krosh Logo"
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  console.error('Logo failed to load');
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            </div>
-            <div className="leading-tight">
-              <span className="text-base font-medium text-krosh-text">
-                Yarn by Krosh
-              </span>
-            </div>
-          </div>
-          <button
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
             onClick={closeSidebar}
-            className="p-2 rounded-full hover:bg-krosh-lavender/30 md:hidden"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <nav className="mt-4 flex-1">
-          <ul className="space-y-2 px-2">
-            {menuItems.map(item => (
-              <li key={item.name}>
-                {item.hasDropdown ? (
-                  <div>
-                    <button
-                      onClick={() => setShowCategoriesDropdown(!showCategoriesDropdown)}
-                      className="flex items-center justify-between w-full px-4 py-3 rounded-lg transition-colors hover:bg-krosh-lavender/10"
-                    >
-                      <div className="flex items-center gap-3">
-                        {item.icon}
-                        <span>{item.name}</span>
-                      </div>
-                      {showCategoriesDropdown ? (
-                        <ChevronDown size={16} />
-                      ) : (
-                        <ChevronRight size={16} />
-                      )}
-                    </button>
-
-                    {showCategoriesDropdown && (
-                      <div className="ml-8 mt-1 space-y-1">
-                        {item.dropdownItems?.map(dropdownItem => (
-                          <Link
-                            key={dropdownItem.name}
-                            to={dropdownItem.path}
-                            state={dropdownItem.state}
-                            onClick={closeSidebar}
-                            className="block px-4 py-2 rounded-lg text-sm hover:bg-krosh-lavender/10 transition-colors"
-                          >
-                            {dropdownItem.name}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <NavLink
-                    to={item.path}
-                    onClick={closeSidebar}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                       ${isActive
-                         ? 'bg-krosh-lavender/30 text-krosh-text font-medium'
-                         : 'hover:bg-krosh-lavender/10'}`
-                    }
-                  >
-                    {item.icon}
-                    <span>{item.name}</span>
-                  </NavLink>
-                )}
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {/* Logout button at the bottom of sidebar */}
-        {user && (
-          <div className="mt-auto p-4 border-t">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left hover:bg-red-50 text-red-600 transition-colors"
-            >
-              <LogOut size={20} />
-              <span>Logout</span>
-            </button>
-          </div>
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          />
         )}
-      </motion.div>
+      </AnimatePresence>
+
+      {/* Desktop sidebar - always visible */}
+      <div className="hidden md:block md:sticky md:pt-16 md:shadow-none">
+        <div
+          id="desktop-sidebar"
+          className="h-full w-64 bg-white z-50 flex flex-col"
+        >
+          <SidebarContent />
+        </div>
+      </div>
+
+      {/* Mobile sidebar with animation */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="md:hidden fixed top-0 left-0 h-full w-64 bg-white z-50 shadow-lg flex flex-col"
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 30,
+              duration: 0.4
+            }}
+          >
+            <SidebarContent />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
