@@ -10,30 +10,15 @@ This document outlines the pending tasks for the Krosh e-commerce platform in or
 - **P3**: Nice-to-have features that enhance the user experience
 - **P4**: Future enhancements
 
-## Action Plan
-
-
-### P1: Core Functionality (Admin)
-
-1. **Complete Orders Page in Admin**
-   - Finish implementation of AdminOrders.tsx
-   - Add order status management functionality
-   - Implement order details view
-   - *Estimated time: 6-8 hours*
-
-2. **Implement Order Status Workflow**
-   - Update order status from requested to approved to shipped
-   - Add notifications for status changes
-   - *Estimated time: 4-5 hours*
-
-3. **Implement Settings Page in Admin**
-   - Create AdminSettings.tsx with configuration options
-   - Add store settings management
-   - *Estimated time: 6-8 hours*
+issues -
+- When on login screen cant go back to previous page
+- eye to see password
+- icons in login create accoutn not visible should 
+- when user loggs out it should clear cart and poducts staes of button 
+- 
 
 
 ### P2: Important Features (Shop)
-
 
 2. **Implement Search Tab**
    - Update Search.tsx to show results only after user searches
@@ -86,3 +71,6 @@ This document outlines the pending tasks for the Krosh e-commerce platform in or
 | 3 | Remove Search from Sidebar | 2023-07-10 | Removed Search option from Sidebar.tsx |
 | 4 | Redesign Cart Page | 2023-07-10 | Improved UI with better product display, enhanced quantity controls, and redesigned order summary |
 | 5 | Add Categories Dropdown in Sidebar | 2023-07-10 | Added categories dropdown in Sidebar.tsx with dynamic fetching from Supabase |
+| 6 | Complete Orders Page in Admin | 2023-07-15 | Enhanced AdminOrders.tsx with advanced filtering, pagination, and detailed order view |
+| 7 | Implement Order Status Workflow | 2023-07-15 | Added status transitions, confirmation dialogs, and status history tracking |
+| 8 | Implement Settings Page in Admin | 2023-07-15 | Created AdminSettings.tsx with store settings, admin user management, and storage stats |
