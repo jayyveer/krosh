@@ -18,6 +18,39 @@ export async function signUp(email: string, password: string, name: string) {
 
   if (error) throw error;
 
+  // Ensure the user is created in the public.users table
+  if (data.user) {
+    try {
+      // Check if the user exists in public.users
+      const { data: userExists, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', data.user.id)
+        .single();
+
+      // If the user doesn't exist in public.users, create it
+      if (userError && userError.code === 'PGRST116') {
+        console.log('User not found in public.users table, creating...');
+
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: data.user.id,
+            email: email,
+            name: name || email.split('@')[0],
+            created_at: new Date().toISOString()
+          });
+
+        if (insertError) {
+          console.error('Error creating user in public.users:', insertError);
+        }
+      }
+    } catch (err) {
+      console.error('Error ensuring user in public.users:', err);
+      // Continue with the signup process even if this fails
+    }
+  }
+
   // If we have a user but no session, try to sign in directly
   // This will work if auto-confirmation is enabled in Supabase
   if (data.user && !data.session) {
@@ -48,21 +81,41 @@ export async function signIn(email: string, password: string) {
 
   if (error) throw error;
 
-  // Check if the user is disabled
+  // Check if the user exists in public.users and is not disabled
   if (data.user) {
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('disabled')
-      .eq('id', data.user.id)
-      .single();
+    try {
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('disabled')
+        .eq('id', data.user.id)
+        .single();
 
-    if (userError) {
-      // If there's an error checking disabled status, proceed with caution
-      console.error('Error checking user disabled status:', userError);
-    } else if (userData?.disabled) {
-      // If the user is disabled, sign them out and throw an error
-      await supabase.auth.signOut();
-      throw new Error('ACCOUNT_DISABLED');
+      if (userError && userError.code === 'PGRST116') {
+        // User doesn't exist in public.users, create it
+        console.log('User not found in public.users table, creating...');
+
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: data.user.id,
+            email: email,
+            name: data.user.user_metadata?.name || email.split('@')[0],
+            created_at: new Date().toISOString()
+          });
+
+        if (insertError) {
+          console.error('Error creating user in public.users:', insertError);
+        }
+      } else if (userError) {
+        // Some other error occurred
+        console.error('Error checking user in public.users:', userError);
+      } else if (userData?.disabled) {
+        // If the user is disabled, sign them out and throw an error
+        await supabase.auth.signOut();
+        throw new Error('ACCOUNT_DISABLED');
+      }
+    } catch (err) {
+      console.error('Error in user check during sign in:', err);
     }
   }
 
