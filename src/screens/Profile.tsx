@@ -1,36 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, MapPin, LogOut, Edit, Plus, Package, ChevronRight } from 'lucide-react';
+import { User, Mail, Phone, MapPin, LogOut, Edit, Plus, Package, ChevronRight, UserCircle } from 'lucide-react';
 import AnimatedContainer from '../components/ui/AnimatedContainer';
 import SectionHeader from '../components/ui/SectionHeader';
 import { useAuthContext } from '../contexts/AuthContext';
 import { signOut } from '../lib/auth';
 import { Navigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-
-interface UserAddress {
-  id: string;
-  address_line1: string;
-  address_line2?: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  is_default: boolean;
-}
+import AddressList from '../components/address/AddressList';
+import { Address } from '../components/address/AddressForm';
+import PhoneNumberForm from '../components/profile/PhoneNumberForm';
+import { useToast } from '../contexts/ToastContext';
 
 interface UserProfile {
   id: string;
   name: string;
   email: string;
   phone?: string;
-  addresses: UserAddress[];
 }
+
+// Tabs for the profile page
+type ProfileTab = 'info' | 'addresses' | 'orders';
 
 const Profile: React.FC = () => {
   const { user, isAdmin } = useAuthContext();
+  const { showToast } = useToast();
   const [error, setError] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<ProfileTab>('info');
+  const [showPhoneForm, setShowPhoneForm] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -41,6 +41,7 @@ const Profile: React.FC = () => {
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
+      setError(null);
 
       // Fetch user profile
       const { data: profileData, error: profileError } = await supabase
@@ -51,23 +52,36 @@ const Profile: React.FC = () => {
 
       if (profileError) throw profileError;
 
-      // Fetch user addresses from the correct 'addresses' table
+      // Fetch user addresses
       const { data: addressesData, error: addressesError } = await supabase
         .from('addresses')
         .select('*')
-        .eq('user_id', user?.id);
+        .eq('user_id', user?.id)
+        .order('is_primary', { ascending: false })
+        .order('created_at', { ascending: false });
 
       if (addressesError) throw addressesError;
 
-      setUserProfile({
-        ...profileData,
-        addresses: addressesData || []
-      });
+      setUserProfile(profileData);
+      setAddresses(addressesData || []);
     } catch (err) {
       console.error('Error fetching user profile:', err);
       setError('Failed to load profile data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddressChange = () => {
+    fetchUserProfile();
+  };
+
+  const handlePhoneUpdate = (phone: string) => {
+    if (userProfile) {
+      setUserProfile({
+        ...userProfile,
+        phone
+      });
     }
   };
 
@@ -113,6 +127,7 @@ const Profile: React.FC = () => {
           </div>
         )}
 
+        {/* Profile Header */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <div className="text-center mb-6">
             <div className="w-24 h-24 bg-krosh-lavender/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -127,107 +142,126 @@ const Profile: React.FC = () => {
             )}
           </div>
 
-          <div className="space-y-4 border-t pt-4">
-            <div className="flex items-center gap-3">
-              <Mail size={18} className="text-gray-400" />
-              <div>
-                <p className="text-sm text-gray-500">Email</p>
-                <p className="font-medium">{user.email}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Phone size={18} className="text-gray-400" />
-              <div>
-                <p className="text-sm text-gray-500">Phone</p>
-                <p className="font-medium">{userProfile?.phone || 'Not provided'}</p>
-              </div>
-              <button className="ml-auto text-krosh-lavender">
-                <Edit size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Addresses Section */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold">Saved Addresses</h3>
-            <button className="text-sm text-krosh-lavender flex items-center gap-1">
-              <Plus size={16} />
-              <span>Add New</span>
+          {/* Tab Navigation */}
+          <div className="flex border-b mb-4">
+            <button
+              onClick={() => setActiveTab('info')}
+              className={`px-4 py-2 font-medium text-sm ${
+                activeTab === 'info'
+                  ? 'text-krosh-lavender border-b-2 border-krosh-lavender'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Info
+            </button>
+            <button
+              onClick={() => setActiveTab('addresses')}
+              className={`px-4 py-2 font-medium text-sm ${
+                activeTab === 'addresses'
+                  ? 'text-krosh-lavender border-b-2 border-krosh-lavender'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Addresses
+            </button>
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`px-4 py-2 font-medium text-sm ${
+                activeTab === 'orders'
+                  ? 'text-krosh-lavender border-b-2 border-krosh-lavender'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Orders
             </button>
           </div>
 
-          {userProfile?.addresses && userProfile.addresses.length > 0 ? (
-            <div className="space-y-4">
-              {userProfile.addresses.map((address) => (
-                <div key={address.id} className="border rounded-lg p-3 relative">
-                  {address.is_default && (
-                    <span className="absolute top-2 right-2 bg-krosh-lavender/20 text-krosh-text text-xs px-2 py-0.5 rounded-full">
-                      Default
-                    </span>
-                  )}
-                  <p className="font-medium">{address.address_line1}</p>
-                  {address.address_line2 && <p>{address.address_line2}</p>}
-                  <p className="text-sm text-gray-600">
-                    {address.city}, {address.state} {address.postal_code}
-                  </p>
-                  <div className="flex gap-2 mt-2">
-                    <button className="text-xs text-krosh-lavender">Edit</button>
-                    <button className="text-xs text-red-500">Remove</button>
+          {/* Personal Info Tab */}
+          {activeTab === 'info' && (
+            <>
+              {showPhoneForm ? (
+                <PhoneNumberForm
+                  currentPhone={userProfile?.phone || ''}
+                  userId={user.id}
+                  onClose={() => setShowPhoneForm(false)}
+                  onSave={handlePhoneUpdate}
+                />
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Mail size={18} className="text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-500">Email</p>
+                      <p className="font-medium">{user.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Phone size={18} className="text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-500">Phone</p>
+                      <p className="font-medium">{userProfile?.phone || 'Not provided'}</p>
+                    </div>
+                    <button
+                      onClick={() => setShowPhoneForm(true)}
+                      className="ml-auto text-krosh-lavender"
+                      aria-label="Edit phone number"
+                    >
+                      <Edit size={16} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <UserCircle size={18} className="text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-500">Name</p>
+                      <p className="font-medium">{userProfile?.name || 'Not provided'}</p>
+                    </div>
+                  </div>
+
+                  {/* Logout Button */}
+                  <div className="pt-4 mt-4 border-t">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center justify-center gap-2 bg-gray-100 py-2 rounded-lg text-gray-700 font-medium hover:bg-gray-200 transition-colors"
+                    >
+                      <LogOut size={18} />
+                      <span>Log Out</span>
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6 text-gray-500">
-              <MapPin size={24} className="mx-auto mb-2 text-gray-400" />
-              <p>No addresses saved yet</p>
-              <p className="text-sm">Add an address to make checkout faster</p>
+              )}
+            </>
+          )}
+
+          {/* Addresses Tab */}
+          {activeTab === 'addresses' && (
+            <AddressList
+              addresses={addresses}
+              onAddressChange={handleAddressChange}
+            />
+          )}
+
+          {/* Orders Tab */}
+          {activeTab === 'orders' && (
+            <div className="space-y-4">
+              <Link
+                to="/orders"
+                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-krosh-lavender/20 rounded-full flex items-center justify-center">
+                    <Package size={20} className="text-krosh-lavender" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Track Orders</p>
+                    <p className="text-sm text-gray-500">View and track your orders</p>
+                  </div>
+                </div>
+                <ChevronRight size={20} className="text-gray-400" />
+              </Link>
             </div>
           )}
-        </div>
-
-        {/* Orders Section */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold">My Orders</h3>
-            <Link
-              to="/orders"
-              className="text-sm text-krosh-lavender flex items-center gap-1"
-            >
-              <span>View All</span>
-              <ChevronRight size={16} />
-            </Link>
-          </div>
-
-          <Link
-            to="/orders"
-            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-krosh-lavender/20 rounded-full flex items-center justify-center">
-                <Package size={20} className="text-krosh-lavender" />
-              </div>
-              <div>
-                <p className="font-medium">Track Orders</p>
-                <p className="text-sm text-gray-500">View and track your orders</p>
-              </div>
-            </div>
-            <ChevronRight size={20} className="text-gray-400" />
-          </Link>
-        </div>
-
-        {/* Logout Button */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 bg-gray-100 py-2 rounded-lg text-gray-700 font-medium hover:bg-gray-200 transition-colors"
-          >
-            <LogOut size={18} />
-            <span>Log Out</span>
-          </button>
         </div>
       </div>
     </AnimatedContainer>

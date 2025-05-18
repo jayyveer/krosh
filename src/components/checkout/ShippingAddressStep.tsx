@@ -1,18 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
 import SectionHeader from '../ui/SectionHeader';
-
-interface Address {
-  id: string;
-  user_id: string;
-  address_line1: string;
-  address_line2?: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  created_at?: string;
-}
+import AddressList from '../address/AddressList';
+import { Address } from '../address/AddressForm';
+import { supabase } from '../../lib/supabase';
 
 interface ShippingAddressStepProps {
   userAddresses: Address[];
@@ -59,35 +51,27 @@ const ShippingAddressStep: React.FC<ShippingAddressStepProps> = ({
         </div>
       ) : (
         <>
-          <div className="space-y-3 mb-6">
-            {userAddresses.map((address) => (
-              <div
-                key={address.id}
-                className={`border rounded-lg p-4 relative ${
-                  selectedAddress === address.id ? 'border-krosh-lavender bg-krosh-lavender/5' : 'border-gray-200'
-                }`}
-                onClick={() => onAddressSelect(address.id)}
-              >
-                <div className="flex items-start">
-                  <div className="mr-3 mt-1">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      selectedAddress === address.id ? 'border-krosh-lavender' : 'border-gray-300'
-                    }`}>
-                      {selectedAddress === address.id && (
-                        <div className="w-3 h-3 rounded-full bg-krosh-lavender"></div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{address.address_line1}</p>
-                    {address.address_line2 && <p className="text-gray-600">{address.address_line2}</p>}
-                    <p className="text-gray-600">
-                      {address.city}, {address.state} {address.postal_code}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="mb-6">
+            <AddressList
+              addresses={userAddresses}
+              onAddressChange={async () => {
+                // Refresh addresses
+                const { data } = await supabase
+                  .from('addresses')
+                  .select('*')
+                  .eq('user_id', userAddresses[0].user_id)
+                  .order('is_primary', { ascending: false });
+
+                if (data && data.length > 0) {
+                  // Update addresses in parent component
+                  // This is a workaround since we can't directly update userAddresses
+                  onAddressSelect(data[0].id);
+                }
+              }}
+              isCheckout={true}
+              selectedAddressId={selectedAddress || undefined}
+              onAddressSelect={onAddressSelect}
+            />
           </div>
 
           <button

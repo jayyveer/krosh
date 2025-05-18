@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Package, ChevronRight, Clock, CheckCircle, Truck, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -67,6 +67,7 @@ const Orders: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const ordersLoadedRef = useRef(false);
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -75,7 +76,11 @@ const Orders: React.FC = () => {
       return;
     }
 
-    fetchOrders();
+    // Only fetch orders if they haven't been loaded yet
+    if (!ordersLoadedRef.current) {
+      fetchOrders();
+      ordersLoadedRef.current = true;
+    }
   }, [user, navigate]);
 
   const fetchOrders = async () => {
@@ -181,7 +186,10 @@ const Orders: React.FC = () => {
           <div className="bg-red-50 text-red-600 p-4 rounded-lg">
             <p className="font-medium">{error}</p>
             <button
-              onClick={fetchOrders}
+              onClick={() => {
+                ordersLoadedRef.current = false;
+                fetchOrders();
+              }}
               className="mt-2 text-sm font-medium text-red-700 hover:underline"
             >
               Try Again

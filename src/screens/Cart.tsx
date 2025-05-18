@@ -15,17 +15,8 @@ import CheckoutStepIndicator from '../components/checkout/CheckoutStepIndicator'
 import VerifyOrderStep from '../components/checkout/VerifyOrderStep';
 import ShippingAddressStep from '../components/checkout/ShippingAddressStep';
 import OrderSummaryStep from '../components/checkout/OrderSummaryStep';
-
-interface Address {
-  id: string;
-  user_id: string;
-  address_line1: string;
-  address_line2?: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  created_at?: string;
-}
+import { motion } from 'framer-motion';
+import { Address } from '../components/address/AddressForm';
 
 
 
@@ -56,6 +47,7 @@ const Cart: React.FC = () => {
         .from('addresses')
         .select('*')
         .eq('user_id', user.id)
+        .order('is_primary', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -63,10 +55,24 @@ const Cart: React.FC = () => {
       console.log('Fetched addresses:', addresses);
 
       if (addresses && addresses.length > 0) {
-        setUserAddresses(addresses);
+        // Map the addresses to match our Address interface
+        const mappedAddresses = addresses.map(addr => ({
+          id: addr.id,
+          user_id: addr.user_id,
+          label: addr.label || 'My Address',
+          address_line: addr.address_line || addr.address_line1 || '',
+          city: addr.city || '',
+          state: addr.state || '',
+          pincode: addr.pincode || addr.postal_code || '',
+          country: addr.country || 'India',
+          is_primary: addr.is_primary || false,
+          created_at: addr.created_at
+        }));
 
-        // Auto-select the first address
-        setSelectedAddress(addresses[0].id);
+        setUserAddresses(mappedAddresses);
+
+        // Auto-select the first address (which should be the primary one due to ordering)
+        setSelectedAddress(mappedAddresses[0].id);
       } else {
         // No addresses found
         setUserAddresses([]);
@@ -107,6 +113,9 @@ const Cart: React.FC = () => {
         return;
       }
 
+      // Format address for order
+      const formattedAddress = `${address.address_line}, ${address.city}, ${address.state} ${address.pincode}, ${address.country}`;
+
       // Create order data
       const orderData = {
         userId: user.id,
@@ -117,7 +126,8 @@ const Cart: React.FC = () => {
           quantity: item.quantity,
           price: Number(item.product.price)
         })),
-        addressId: address.id, // Use address ID instead of formatted address
+        addressId: address.id!, // Use address ID with non-null assertion
+        shippingAddress: formattedAddress, // Add formatted address
         paymentMethod: paymentMethod, // Using the const defined above
       };
 
@@ -183,20 +193,20 @@ const Cart: React.FC = () => {
         <div className="py-4">
           <SectionHeader title="Your Cart" showBackButton={true} />
 
-          <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="w-16 h-16 bg-krosh-blue/20 rounded-full flex items-center justify-center mb-4">
-                <ShoppingCart size={30} className="text-krosh-text" />
+          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+            <div className="flex flex-col items-center justify-center py-4">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <ShoppingCart size={24} className="text-gray-500" />
               </div>
 
-              <h2 className="text-xl font-medium mb-2">Your cart is empty</h2>
-              <p className="text-gray-500 mb-6 max-w-xs mx-auto">
-                Start adding some items to your cart!
+              <h2 className="text-lg font-medium mb-2">Your cart is empty</h2>
+              <p className="text-gray-500 mb-4 text-sm">
+                Add items to start a new order
               </p>
 
               <Link
                 to="/shop"
-                className="px-6 py-2 bg-krosh-lavender text-krosh-text rounded-lg font-medium hover:opacity-90 transition-opacity"
+                className="px-6 py-2 bg-krosh-lavender text-white rounded-lg text-sm font-medium"
               >
                 Browse Products
               </Link>
@@ -294,84 +304,136 @@ const Cart: React.FC = () => {
           <>
             <SectionHeader title="Your Cart" showBackButton={true} />
 
-            <div className="space-y-4 mb-6">
+            <div className="space-y-2 mb-6">
               {cartItems.map((item) => (
-            <div key={item.id} className="bg-white rounded-lg shadow-sm p-4 flex items-center gap-4">
-              <img
-                src={item.variant.image_urls?.[0] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
-                alt={item.product.name}
-                className="w-20 h-20 object-cover rounded"
-                onError={(e) => {
-                  // If image fails to load, use placeholder
-                  (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg';
-                }}
-              />
-              <div className="flex-1">
-                <h3 className="font-medium">{item.product.name}</h3>
-                <p className="text-sm text-gray-500">
-                  {item.product.size && <span className="font-medium">Size: </span>}{item.product.size}
-                  {item.product.size && item.variant.color && <span> • </span>}
-                  {item.variant.color && <span><span className="font-medium">Color: </span>{item.variant.name || item.variant.color}</span>}
-                </p>
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold">{formatPrice(item.product.price)}</p>
-                  {item.product.original_price && Number(item.product.original_price) > Number(item.product.price) && (
-                    <p className="text-sm text-gray-500 line-through">{formatPrice(item.product.original_price)}</p>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                <button
-                  onClick={() => handleRemoveItem(item.id)}
-                  className="text-gray-400 hover:text-red-500 transition-colors"
+                <motion.div
+                  key={item.id}
+                  className="bg-white rounded-lg shadow-sm p-4"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <Trash2 size={18} />
-                </button>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleDecreaseQuantity(item)}
-                    className="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
-                  >
-                    -
-                  </button>
-                  <span>{item.quantity}</span>
-                  <button
-                    onClick={() => handleIncreaseQuantity(item)}
-                    className={`px-3 py-1 rounded ${
-                      item.quantity >= Math.min(5, item.variant.stock || 5)
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-gray-100 hover:bg-gray-200 transition-colors'
-                    }`}
-                    disabled={item.quantity >= Math.min(5, item.variant.stock || 5)}
-                  >
-                    +
-                  </button>
-                </div>
+                  <div className="flex items-center">
+                    {/* Quantity Controls - Left side */}
+                    <div className="flex flex-col items-center border border-gray-200 rounded-lg overflow-hidden mr-3">
+                      <button
+                        onClick={() => handleIncreaseQuantity(item)}
+                        className={`px-2 py-1 w-8 ${
+                          item.quantity >= Math.min(5, item.variant.stock || 5)
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-gray-50 hover:bg-gray-100 transition-colors text-gray-700'
+                        } text-xs`}
+                        disabled={item.quantity >= Math.min(5, item.variant.stock || 5)}
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
+                      <div className="px-2 py-1 bg-white text-center w-8">
+                        {item.quantity}
+                      </div>
+                      <button
+                        onClick={() => handleDecreaseQuantity(item)}
+                        className="px-2 py-1 w-8 bg-gray-50 hover:bg-gray-100 transition-colors text-gray-700 text-xs"
+                        aria-label="Decrease quantity"
+                      >
+                        -
+                      </button>
+                    </div>
+
+                    {/* Product Image - Small */}
+                    <div className="relative w-16 h-16 mr-3">
+                      <img
+                        src={item.variant.image_urls?.[0] || 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg'}
+                        alt={item.product.name}
+                        className="w-full h-full object-cover rounded-md"
+                        onError={(e) => {
+                          // If image fails to load, use placeholder
+                          (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/6862208/pexels-photo-6862208.jpeg';
+                        }}
+                      />
+                    </div>
+
+                    {/* Product Details - Middle */}
+                    <div className="flex-1">
+                      <div className="flex justify-between">
+                        <h3 className="font-medium">{item.product.name}</h3>
+                        <p className="font-semibold">{formatPrice(item.product.price)}</p>
+                      </div>
+                      <div className="flex flex-wrap text-xs text-gray-500 mt-1">
+                        {item.product.size && (
+                          <span className="mr-2">{item.product.size}</span>
+                        )}
+                        {item.variant.color && (
+                          <span className="mr-2">{item.variant.name || item.variant.color}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Remove button - Right side */}
+                    <button
+                      onClick={() => handleRemoveItem(item.id)}
+                      className="ml-2 text-gray-400 hover:text-red-500 transition-colors"
+                      aria-label="Remove item"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+        <div className="mt-4">
+          {/* Promo Code Section */}
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-4 flex items-center">
+            <input
+              type="text"
+              placeholder="Promo Code"
+              className="flex-1 p-2 border border-gray-200 rounded-lg mr-2 text-sm"
+            />
+            <button className="bg-krosh-lavender text-white px-4 py-2 rounded-lg text-sm font-medium">
+              Apply
+            </button>
+          </div>
+
+          {/* Order Summary */}
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <h3 className="text-base font-medium mb-3">Cart total</h3>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-medium">{formatPrice(totalPrice)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Tax</span>
+                <span className="font-medium">{formatPrice(totalPrice * 0.01)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Delivery</span>
+                <span className="font-medium">{formatPrice(40)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-sm text-green-600">
+                <span>Promo discount</span>
+                <span>- {formatPrice(0)}</span>
+              </div>
+
+              <div className="flex justify-between items-center pt-2 mt-2 border-t border-gray-100">
+                <span className="font-medium">Subtotal</span>
+                <span className="font-bold">{formatPrice(totalPrice + (totalPrice * 0.01) + 40)}</span>
               </div>
             </div>
-          ))}
-        </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <div className="flex justify-between items-center py-2 border-b">
-            <span className="text-gray-600">Subtotal</span>
-            <span className="font-medium">{formatPrice(totalPrice)}</span>
+            <button
+              onClick={startCheckout}
+              className="w-full mt-4 py-3 bg-krosh-lavender text-white rounded-lg font-medium"
+            >
+              Proceed to Checkout
+            </button>
           </div>
-          <div className="flex justify-between items-center py-2 border-b">
-            <span className="text-gray-600">Shipping</span>
-            <span className="font-medium">{formatPrice(0)}</span>
-          </div>
-          <div className="flex justify-between items-center py-2 mt-2">
-            <span className="text-lg font-semibold">Total</span>
-            <span className="text-lg font-bold">{formatPrice(totalPrice)}</span>
-          </div>
-          <button
-            onClick={startCheckout}
-            className="w-full mt-4 py-3 bg-gradient-to-r from-krosh-lavender to-krosh-pink text-white rounded-lg font-medium hover:opacity-90 transition-opacity shadow-md"
-          >
-            Proceed to Checkout
-          </button>
-            </div>
+        </div>
           </>
         )}
       </div>

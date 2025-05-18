@@ -3,17 +3,7 @@ import { CreditCard } from 'lucide-react';
 import SectionHeader from '../ui/SectionHeader';
 import { formatPrice } from '../../lib/formatters';
 import { CartItem } from '../../redux/slices/cartSlice';
-
-interface Address {
-  id: string;
-  user_id: string;
-  address_line1: string;
-  address_line2?: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  created_at?: string;
-}
+import { Address } from '../address/AddressForm';
 
 interface OrderSummaryStepProps {
   cartItems: CartItem[];
@@ -37,7 +27,7 @@ const OrderSummaryStep: React.FC<OrderSummaryStepProps> = ({
 
   // Format address for display
   const formattedAddress = selectedAddress
-    ? `${selectedAddress.address_line1}, ${selectedAddress.address_line2 ? selectedAddress.address_line2 + ', ' : ''}${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.postal_code}`
+    ? `${selectedAddress.address_line}, ${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.pincode}, ${selectedAddress.country}`
     : '';
 
   return (
