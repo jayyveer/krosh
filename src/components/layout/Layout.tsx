@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import TopNavbar from './TopNavbar';
 import Sidebar from './Sidebar';
 import BottomTabs from './BottomTabs';
+import Footer from './Footer';
 
 const Layout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -44,10 +45,11 @@ const Layout: React.FC = () => {
       <div className="flex flex-1 relative">
         <Sidebar isOpen={isSidebarOpen} closeSidebar={closeSidebar} />
 
-        <main className="flex-1 pb-16 md:pb-0 pt-16 overflow-auto">
-          <div className="container mx-auto px-4 py-0 min-h-full">
+        <main className="flex-1 pb-16 md:pb-0 pt-16 overflow-auto flex flex-col">
+          <div className="container mx-auto px-4 py-0 flex-grow">
             <Outlet />
           </div>
+          <Footer />
         </main>
       </div>
 

@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, ShoppingBag, Info, Package, ShoppingCart, X, LogOut, Grid3X3, Settings, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  Home, ShoppingBag, Info, Package, ShoppingCart, X, LogOut, Grid3X3,
+  Settings, ChevronDown, ChevronRight, HelpCircle, BookOpen, FileText
+} from 'lucide-react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { signOut } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
@@ -24,7 +27,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
   const [showAdminLink, setShowAdminLink] = useState(false);
   const [adminLinkChecked, setAdminLinkChecked] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [showCategoriesDropdown, setShowCategoriesDropdown] = useState(false);
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
 
   // Check admin status when the user hovers over the sidebar
   useEffect(() => {
@@ -91,6 +94,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
     { name: 'Orders', path: '/orders', icon: <Package size={20} /> },
     { name: 'Cart', path: '/cart', icon: <ShoppingCart size={20} /> },
     { name: 'About', path: '/about', icon: <Info size={20} /> },
+    { name: 'Our Story', path: '/our-story', icon: <BookOpen size={20} /> },
+    { name: 'FAQ', path: '/faq', icon: <HelpCircle size={20} /> },
+    {
+      name: 'Policies',
+      path: '/terms',
+      icon: <FileText size={20} />,
+      hasDropdown: true,
+      dropdownItems: [
+        { name: 'Terms & Conditions', path: '/terms' },
+        { name: 'Privacy Policy', path: '/privacy' },
+        { name: 'Shipping Policy', path: '/shipping' },
+        { name: 'Return Policy', path: '/returns' }
+      ]
+    },
   ];
 
   // Only add admin link if we've checked and the user is an admin
@@ -145,21 +162,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeSidebar }) => {
               {item.hasDropdown ? (
                 <div>
                   <button
-                    onClick={() => setShowCategoriesDropdown(!showCategoriesDropdown)}
+                    onClick={() => setOpenDropdowns(prev => ({
+                      ...prev,
+                      [item.name]: !prev[item.name]
+                    }))}
                     className="flex items-center justify-between w-full px-4 py-3 rounded-lg transition-colors hover:bg-krosh-lavender/10"
                   >
                     <div className="flex items-center gap-3">
                       {item.icon}
                       <span>{item.name}</span>
                     </div>
-                    {showCategoriesDropdown ? (
+                    {openDropdowns[item.name] ? (
                       <ChevronDown size={16} />
                     ) : (
                       <ChevronRight size={16} />
                     )}
                   </button>
 
-                  {showCategoriesDropdown && (
+                  {openDropdowns[item.name] && (
                     <div className="ml-8 mt-1 space-y-1">
                       {item.dropdownItems?.map(dropdownItem => (
                         <Link

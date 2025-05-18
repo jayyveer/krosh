@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, MapPin, LogOut, Edit, Plus, Package, ChevronRight, UserCircle } from 'lucide-react';
+import { User, Mail, Phone, MapPin, LogOut, Edit, Plus, Package, ChevronRight, UserCircle, RefreshCw } from 'lucide-react';
 import AnimatedContainer from '../components/ui/AnimatedContainer';
 import SectionHeader from '../components/ui/SectionHeader';
 import { useAuthContext } from '../contexts/AuthContext';
@@ -31,10 +31,13 @@ const Profile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ProfileTab>('info');
   const [showPhoneForm, setShowPhoneForm] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const dataLoadedRef = useRef(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && !dataLoadedRef.current) {
       fetchUserProfile();
+      dataLoadedRef.current = true;
     }
   }, [user]);
 
@@ -72,8 +75,34 @@ const Profile: React.FC = () => {
     }
   };
 
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await fetchUserProfile();
+    setRefreshing(false);
+    showToast('Profile refreshed', 'success');
+  };
+
   const handleAddressChange = () => {
-    fetchUserProfile();
+    // Only refetch addresses instead of the entire profile
+    fetchAddresses();
+  };
+
+  const fetchAddresses = async () => {
+    try {
+      // Fetch user addresses
+      const { data: addressesData, error: addressesError } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('is_primary', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (addressesError) throw addressesError;
+      setAddresses(addressesData || []);
+    } catch (err) {
+      console.error('Error fetching addresses:', err);
+      setError('Failed to load addresses');
+    }
   };
 
   const handlePhoneUpdate = (phone: string) => {
@@ -119,7 +148,18 @@ const Profile: React.FC = () => {
   return (
     <AnimatedContainer>
       <div className="py-4 max-w-md mx-auto">
-        <SectionHeader title="Profile" showBackButton={false} />
+        <div className="flex justify-between items-center mb-4">
+          <SectionHeader title="Profile" showBackButton={false} />
+          <button
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-1 text-sm text-krosh-lavender"
+            aria-label="Refresh profile"
+          >
+            <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
+        </div>
 
         {error && (
           <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg mb-4">

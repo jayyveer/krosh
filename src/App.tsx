@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import ScrollToTop from './components/utils/ScrollToTop';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import Layout from './components/layout/Layout';
@@ -17,6 +18,13 @@ import Cart from './screens/Cart';
 import Orders from './screens/Orders';
 import Categories from './screens/Categories';
 import ProductDetail from './screens/ProductDetail';
+import About from './screens/About';
+import OurStory from './screens/OurStory';
+import FAQ from './screens/FAQ';
+import Terms from './screens/Terms';
+import Privacy from './screens/Privacy';
+import Shipping from './screens/Shipping';
+import Returns from './screens/Returns';
 import AdminDashboard from './screens/admin/AdminDashboard';
 import AdminProducts from './screens/admin/AdminProducts';
 import AdminCategories from './screens/admin/AdminCategories';
@@ -31,6 +39,7 @@ function App() {
     <AuthProvider>
       <ToastProvider>
         <Router>
+          <ScrollToTop />
           <div className="bg-krosh-background min-h-screen text-krosh-text font-sans">
             <AnimatePresence mode="wait">
               <Routes>
@@ -62,6 +71,13 @@ function App() {
                   <Route path="cart" element={<Cart />} />
                   <Route path="orders" element={<Orders />} />
                   <Route path="product/:id" element={<ProductDetail />} />
+                  <Route path="about" element={<About />} />
+                  <Route path="our-story" element={<OurStory />} />
+                  <Route path="faq" element={<FAQ />} />
+                  <Route path="terms" element={<Terms />} />
+                  <Route path="privacy" element={<Privacy />} />
+                  <Route path="shipping" element={<Shipping />} />
+                  <Route path="returns" element={<Returns />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>

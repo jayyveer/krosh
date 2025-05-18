@@ -31,55 +31,14 @@ This document outlines the pending tasks for the Krosh e-commerce platform in or
    - Add store settings management
    - *Estimated time: 6-8 hours*
 
-### P1: Core Functionality (Shop)
-
-
 
 ### P2: Important Features (Shop)
 
-1. **Redesign Home Page**
-   - Add beginners kit section
-   - Add information about crocheting
-   - Improve overall layout and visual appeal
-   - *Estimated time: 8-10 hours*
 
 2. **Implement Search Tab**
    - Update Search.tsx to show results only after user searches
    - Improve search functionality
    - *Estimated time: 3-4 hours*
-
-
-### P3: Enhanced User Experience
-
-1. **Design About Page**
-   - Create About.tsx with company information
-   - *Estimated time: 3-4 hours*
-
-2. **Add Terms and Conditions and Privacy Section**
-   - Create pages for legal information
-   - Add links in footer
-   - *Estimated time: 3-4 hours*
-
-3. **Add Our Story in Sidebar**
-   - Update Sidebar.tsx to include Our Story link
-   - Create Our Story page
-   - *Estimated time: 2-3 hours*
-
-4. **Add FAQ Section in Sidebar**
-   - Update Sidebar.tsx to include FAQ link
-   - Create FAQ page
-   - *Estimated time: 3-4 hours*
-
-5. **Add Social Media Links**
-   - Create social media section
-   - Add redirection to social platforms
-   - *Estimated time: 1-2 hours*
-
-6. **Update Footer**
-   - Add categories and sidebar sections to footer
-   - Add policies in the footer
-   - *Estimated time: 2-3 hours*
-
 
 ### P4: Future Enhancements
 
