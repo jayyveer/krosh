@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 
 export async function signUp(email: string, password: string, name: string) {
-  // Sign up with Supabase Auth - no email verification
+  // Sign up with Supabase Auth with auto-confirmation
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -11,28 +11,17 @@ export async function signUp(email: string, password: string, name: string) {
       data: {
         name,
       },
-      // Explicitly disable email verification by setting emailRedirectTo to empty string
+      // Set emailRedirectTo to empty string to disable email verification
       emailRedirectTo: '',
     },
   });
 
   if (error) throw error;
 
-  // If we have a user but no session, it means email confirmation might be required
-  // Force sign in immediately to bypass email confirmation
+  // If we have a user but no session, try to sign in directly
+  // This will work if auto-confirmation is enabled in Supabase
   if (data.user && !data.session) {
     try {
-      // First, try to manually confirm the email on the server side
-      // This is a backup in case the database trigger doesn't work
-      try {
-        // This is a custom RPC function that would need to be created in Supabase
-        await supabase.rpc('confirm_user_email', { user_id: data.user.id });
-      } catch (confirmErr) {
-        // Ignore errors from this step, as it's just a backup
-        console.log('Email auto-confirmation via RPC not available, trying direct login');
-      }
-
-      // Now try to sign in directly
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
